@@ -1,0 +1,19 @@
+{
+  "name": "code-lens-ai",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n client,server -c cyan,green \"pnpm dev:client\" \"pnpm dev:server\"",
+    "dev:client": "pnpm --filter @code-lens-ai/client run dev",
+    "dev:server": "pnpm --filter @code-lens-ai/server run dev",
+    "build": "pnpm --filter @code-lens-ai/client run build && pnpm --filter @code-lens-ai/server run build",
+    "start": "pnpm --filter @code-lens-ai/server run start",
+    "lint": "oxlint client server",
+    "typecheck": "pnpm -r run typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "oxlint": "^1.81.0"
+  }
+}
