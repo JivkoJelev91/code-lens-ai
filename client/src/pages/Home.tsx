@@ -36,41 +36,56 @@ const Home = () => {
       <MusicToggle />
 
       <section className="home__window">
-        <div className="home__bar">
+        <header className="home__bar">
           <span className="home__dot" />
           <span className="home__dot" />
           <span className="home__dot" />
-          <code className="home__path">root@matrix:~# code --review</code>
+          <h1 className="home__title">CodeLens AI</h1>
           <MusicToggle />
+        </header>
+
+        <div className="home__split">
+          <section className="home__pane">
+            <label className="home__label" htmlFor="code">
+              code
+            </label>
+            <textarea
+              id="code"
+              className="home__code"
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="const users = ..."
+              spellCheck={false}
+            />
+          </section>
+
+          <section className="home__pane">
+            <label className="home__label">review</label>
+            {error ? (
+              <p className="home__status">{error}</p>
+            ) : review ? (
+              <pre className="home__stream">{JSON.stringify(review, null, 2)}</pre>
+            ) : (
+              <p className="home__placeholder">Your review will appear here.</p>
+            )}
+          </section>
         </div>
 
-        <div className="home__body">
-          <label className="home__label" htmlFor="code">
-            code
-          </label>
-          <textarea
-            id="code"
-            className="home__code"
-            value={code}
-            onChange={(event) => setCode(event.target.value)}
-            placeholder="const users = ..."
-            spellCheck={false}
-          />
-
-          <button
-            type="button"
-            className="home__submit"
-            onClick={handleReview}
-            disabled={loading}
-          >
-            {'> '}{loading ? 'reviewing...' : 'review code'}
-          </button>
-
-          {error && <p className="home__status">{error}</p>}
-          {review && (
-            <pre className="home__stream">{JSON.stringify(review, null, 2)}</pre>
+        <button
+          type="button"
+          className="home__submit"
+          onClick={handleReview}
+          disabled={loading}
+        >
+          {'> '}review code
+          {loading && (
+            <span className="home__dots" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
           )}
-        </div>
+        </button>
       </section>
     </main>
   )

@@ -7,8 +7,12 @@
 
   &__window {
     z-index: 1;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
     width: 100%;
-    max-width: 640px;
+    max-width: 1200px;
+    height: 82svh;
+    min-height: 480px;
     border: 1px solid;
     background: rgba(0, 12, 2, 0.9);
     box-shadow: 0 0 28px rgba(0, 255, 65, 0.2);
@@ -38,18 +42,30 @@
     }
   }
 
-  &__path {
-    margin-left: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  &__title {
+    margin: 0 0 0 8px;
+    font-size: inherit;
+    font-weight: 700;
+    letter-spacing: 2px;
   }
 
-  &__body {
+  &__split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 0;
+  }
+
+  &__pane {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0;
+    min-height: 0;
     padding: 18px;
+
+    & + & {
+      border-left: 1px solid;
+    }
   }
 
   &__label {
@@ -59,21 +75,16 @@
     opacity: 0.7;
   }
 
-  &__form {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
   &__code {
+    flex: 1;
     width: 100%;
-    min-height: 56svh;
+    min-height: 0;
     padding: 10px;
     font: inherit;
     color: inherit;
     background: transparent;
     border: 1px solid rgba(0, 255, 65, 0.4);
-    resize: vertical;
+    resize: none;
 
     &::placeholder {
       opacity: 0.4;
@@ -85,7 +96,41 @@
     }
   }
 
+  &__stream {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: inherit;
+    background: rgba(0, 255, 65, 0.04);
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    overflow: auto;
+  }
+
+  &__placeholder {
+    flex: 1;
+    margin: 0;
+    padding: 10px;
+    font-size: 12px;
+    opacity: 0.4;
+  }
+
+  &__status {
+    margin: 0;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
   &__submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
     padding: 10px;
     font: inherit;
     font-weight: 700;
@@ -93,7 +138,8 @@
     text-transform: uppercase;
     color: inherit;
     background: transparent;
-    border: 1px solid;
+    border: 0;
+    border-top: 1px solid;
     cursor: pointer;
 
     &:hover {
@@ -106,23 +152,67 @@
     }
   }
 
-  &__status {
-    margin: 0;
-    font-size: 12px;
-    opacity: 0.7;
+  &__dots {
+    display: inline-flex;
+    gap: 4px;
+
+    span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--matrix-green);
+      box-shadow: 0 0 6px var(--matrix-green);
+      animation: home-blink 1.2s infinite;
+
+      &:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+    }
   }
 
-  &__stream {
-    margin: 0;
-    padding: 10px;
-    font-size: 12px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
-    color: inherit;
-    background: rgba(0, 255, 65, 0.04);
-    border: 1px solid rgba(0, 255, 65, 0.3);
-    max-height: 40svh;
-    overflow: auto;
+  @media (max-width: 700px) {
+    &__window {
+      height: auto;
+      min-height: 0;
+    }
+
+    &__split {
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+
+    &__pane {
+      & + & {
+        border-left: 0;
+        border-top: 1px solid;
+      }
+    }
+
+    &__code {
+      flex: 1;
+      min-height: 28svh;
+      field-sizing: content;
+    }
+
+    &__stream,
+    &__placeholder {
+      min-height: 28svh;
+    }
+  }
+}
+
+@keyframes home-blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+  }
+
+  40% {
+    opacity: 1;
   }
 }

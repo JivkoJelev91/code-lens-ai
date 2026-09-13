@@ -20,6 +20,34 @@ body {
   min-height: 100svh;
 }
 
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 65, 0.3);
+  border: 2px solid #000;
+  border-radius: 6px;
+
+  &:hover {
+    background: rgba(0, 255, 65, 0.55);
+  }
+}
+
+::-webkit-scrollbar-corner {
+  background: #000;
+}
+
+* {
+  scrollbar-color: rgba(0, 255, 65, 0.3) #000;
+  scrollbar-width: thin;
+}
+
 ::selection {
   background: var(--matrix-green);
   color: #000;
