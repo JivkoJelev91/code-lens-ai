@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import MatrixRain from '@/components/MatrixRain';
 import MusicToggle from '@/components/MusicToggle';
+import ReviewView, { type Review } from '@/components/ReviewView';
 import '@/pages/Home.scss';
 
 const Home = () => {
   const [code, setCode] = useState('')
-  const [review, setReview] = useState<Record<string, unknown> | null>(null)
+  const [review, setReview] = useState<Review | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -64,7 +65,7 @@ const Home = () => {
             {error ? (
               <p className="home__status">{error}</p>
             ) : review ? (
-              <pre className="home__stream">{JSON.stringify(review, null, 2)}</pre>
+              <ReviewView review={review} />
             ) : (
               <p className="home__placeholder">Your review will appear here.</p>
             )}

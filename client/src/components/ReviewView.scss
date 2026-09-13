@@ -1,0 +1,139 @@
+.review-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  font-size: 13px;
+
+  &__badge {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--matrix-green);
+  }
+
+  &__score {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  &__score-label {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  &__score-value {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+
+    span {
+      font-size: 14px;
+      font-weight: 400;
+      opacity: 0.6;
+    }
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__heading {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  &__summary {
+    margin: 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &__empty {
+    margin: 0;
+    opacity: 0.6;
+  }
+
+  &__issues {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__issue {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    background: rgba(0, 255, 65, 0.04);
+
+    &--high {
+      border-color: rgba(255, 69, 58, 0.5);
+      background: rgba(255, 69, 58, 0.05);
+    }
+
+    &--medium {
+      border-color: rgba(255, 195, 66, 0.5);
+      background: rgba(255, 195, 66, 0.05);
+    }
+  }
+
+  &__issue-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 11px;
+    flex-wrap: wrap;
+  }
+
+  &__issue-severity {
+    font-weight: 700;
+  }
+
+  &__issue-category {
+    opacity: 0.8;
+  }
+
+  &__issue-line {
+    margin-left: auto;
+    opacity: 0.6;
+  }
+
+  &__issue-message {
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  &__issue-suggestion {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--matrix-green);
+    opacity: 0.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  @media (max-width: 700px) {
+    min-height: 28svh;
+    max-height: 56svh;
+  }
+}
