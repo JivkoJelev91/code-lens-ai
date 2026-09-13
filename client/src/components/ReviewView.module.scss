@@ -32,12 +32,17 @@
     font-size: 30px;
     font-weight: 700;
     line-height: 1;
+  }
 
-    span {
-      font-size: 14px;
-      font-weight: 400;
-      opacity: 0.6;
-    }
+  &__cursor {
+    display: inline-block;
+    width: 8px;
+    height: 0.9em;
+    margin-left: 2px;
+    vertical-align: -0.1em;
+    background: var(--matrix-green);
+    box-shadow: 0 0 6px var(--matrix-green);
+    animation: cursor-blink 0.7s steps(1) infinite;
   }
 
   &__section {
@@ -82,6 +87,7 @@
     padding: 10px;
     border: 1px solid rgba(0, 255, 65, 0.3);
     background: rgba(0, 255, 65, 0.04);
+    animation: issue-in 0.35s ease-out;
 
     &--high {
       border-color: rgba(255, 69, 58, 0.5);
@@ -135,5 +141,23 @@
   @media (max-width: 700px) {
     min-height: 28svh;
     max-height: 56svh;
+  }
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes issue-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

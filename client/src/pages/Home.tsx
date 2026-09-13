@@ -7,6 +7,7 @@ import styles from '@/pages/Home.module.scss';
 const Home = () => {
   const [code, setCode] = useState('')
   const [review, setReview] = useState<Review | null>(null)
+  const [reviewSeq, setReviewSeq] = useState(0)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -23,6 +24,7 @@ const Home = () => {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Review failed.')
       setReview(data)
+      setReviewSeq((seq) => seq + 1)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Review failed.')
       setReview(null)
@@ -62,9 +64,18 @@ const Home = () => {
           <section className={styles.homePane}>
             <label className={styles.homeLabel}>review</label>
             {error ? (
-              <p className={styles.homeStatus}>{error}</p>
+              <>
+                <p className={styles.homeStatus}>{error}</p>
+                <button
+                  type="button"
+                  className={styles.homeRetry}
+                  onClick={handleReview}
+                >
+                  try again
+                </button>
+              </>
             ) : review ? (
-              <ReviewView review={review} />
+              <ReviewView key={reviewSeq} review={review} />
             ) : (
               <p className={styles.homePlaceholder}>Your review will appear here.</p>
             )}
@@ -75,7 +86,8 @@ const Home = () => {
           type="button"
           className={styles.homeSubmit}
           onClick={handleReview}
-          disabled={loading}
+          disabled={loading || !code.trim()}
+          data-loading={loading}
         >
           {'> '}review code
           {loading && (
