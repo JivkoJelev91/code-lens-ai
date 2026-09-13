@@ -67,7 +67,9 @@ const Home = () => {
             <CodeEditor value={code} onChange={handleCodeChange} />
           </section>
 
-          <section className={styles.homePane}>
+          <section
+            className={`${styles.homePane} ${styles.homePaneAside}`}
+          >
             <span className={styles.homeLabel}>review</span>
             {loading ? (
               <p className={styles.homeTyping}>

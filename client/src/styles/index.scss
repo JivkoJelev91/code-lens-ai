@@ -1,6 +1,13 @@
 :root {
   --matrix-green: #00ff41;
+  --matrix-green-faint: rgba(0, 255, 65, 0.04);
+  --matrix-green-dim: rgba(0, 255, 65, 0.2);
+  --matrix-green-muted: rgba(0, 255, 65, 0.3);
+  --matrix-green-soft: rgba(0, 255, 65, 0.4);
+  --matrix-green-glow: rgba(0, 255, 65, 0.5);
+  --matrix-green-bright: rgba(0, 255, 65, 0.55);
   --matrix-bg: #000;
+  --matrix-window-bg: rgba(0, 12, 2, 0.9);
   font-family: 'Consolas', 'Courier New', ui-monospace, monospace;
 }
 
@@ -10,6 +17,7 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
   min-height: 100svh;
   background: var(--matrix-bg);
   color: var(--matrix-green);
@@ -17,6 +25,7 @@ body {
 }
 
 #root {
+  min-height: 100vh;
   min-height: 100svh;
 }
 
@@ -26,31 +35,31 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #000;
+  background: var(--matrix-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 255, 65, 0.3);
-  border: 2px solid #000;
+  background: var(--matrix-green-muted);
+  border: 2px solid var(--matrix-bg);
   border-radius: 6px;
 
   &:hover {
-    background: rgba(0, 255, 65, 0.55);
+    background: var(--matrix-green-bright);
   }
 }
 
 ::-webkit-scrollbar-corner {
-  background: #000;
+  background: var(--matrix-bg);
 }
 
 * {
-  scrollbar-color: rgba(0, 255, 65, 0.3) #000;
+  scrollbar-color: var(--matrix-green-muted) var(--matrix-bg);
   scrollbar-width: thin;
 }
 
 ::selection {
   background: var(--matrix-green);
-  color: #000;
+  color: var(--matrix-bg);
 }
 
 .monaco-editor,

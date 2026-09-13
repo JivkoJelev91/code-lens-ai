@@ -85,8 +85,8 @@
     flex-direction: column;
     gap: 6px;
     padding: 10px;
-    border: 1px solid rgba(0, 255, 65, 0.3);
-    background: rgba(0, 255, 65, 0.04);
+    border: 1px solid var(--matrix-green-muted);
+    background: var(--matrix-green-faint);
     animation: issue-in 0.35s ease-out;
 
     &--high {
@@ -139,7 +139,9 @@
   }
 
   @media (max-width: 700px) {
+    min-height: 28vh;
     min-height: 28svh;
+    max-height: 56vh;
     max-height: 56svh;
   }
 }

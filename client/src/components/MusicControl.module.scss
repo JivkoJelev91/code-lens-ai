@@ -12,7 +12,7 @@
     cursor: pointer;
     color: var(--matrix-green);
     background: transparent;
-    border: 1px solid rgba(0, 255, 65, 0.4);
+    border: 1px solid var(--matrix-green-soft);
     border-radius: 50%;
 
     svg {
@@ -22,7 +22,7 @@
     }
 
     &:hover {
-      box-shadow: 0 0 14px rgba(0, 255, 65, 0.5);
+      box-shadow: 0 0 14px var(--matrix-green-glow);
     }
   }
 }

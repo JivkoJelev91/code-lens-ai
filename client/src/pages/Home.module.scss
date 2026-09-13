@@ -2,6 +2,7 @@
   position: relative;
   display: grid;
   place-items: center;
+  min-height: 100vh;
   min-height: 100svh;
   padding: 20px;
 
@@ -11,11 +12,12 @@
     grid-template-rows: auto 1fr auto;
     width: 100%;
     max-width: 1400px;
+    height: 82vh;
     height: 82svh;
     min-height: 480px;
     border: 1px solid;
-    background: rgba(0, 12, 2, 0.9);
-    box-shadow: 0 0 28px rgba(0, 255, 65, 0.2);
+    background: var(--matrix-window-bg);
+    box-shadow: 0 0 28px var(--matrix-green-dim);
   }
 
   &__bar {
@@ -31,7 +33,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #00ff41;
+    background: var(--matrix-green);
 
     &:nth-child(2) {
       opacity: 0.35;
@@ -63,7 +65,7 @@
     min-height: 0;
     padding: 18px;
 
-    & + & {
+    &--aside {
       border-left: 1px solid;
     }
   }
@@ -128,7 +130,7 @@
     cursor: pointer;
 
     &:hover {
-      box-shadow: 0 0 14px rgba(0, 255, 65, 0.5);
+      box-shadow: 0 0 14px var(--matrix-green-glow);
     }
 
     &:disabled {
@@ -171,17 +173,17 @@
 
     &__split {
       grid-template-columns: 1fr;
-      min-height: 0;
     }
 
     &__pane {
-      & + & {
+      &--aside {
         border-left: 0;
         border-top: 1px solid;
       }
     }
 
     &__placeholder {
+      min-height: 28vh;
       min-height: 28svh;
     }
   }
