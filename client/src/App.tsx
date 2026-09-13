@@ -1,5 +1,7 @@
+import Home from '@/pages/Home'
+
 const App = () => {
-  return <h1>CodeLens AI</h1>
+  return <Home />
 }
 
 export default App
