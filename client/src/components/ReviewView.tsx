@@ -1,4 +1,4 @@
-import '@/components/ReviewView.scss';
+import styles from '@/components/ReviewView.module.scss';
 
 export type Severity = 'high' | 'medium' | 'low';
 
@@ -21,55 +21,62 @@ export type Review = {
 };
 
 const SEVERITY_META: Record<Severity, { icon: string; label: string }> = {
-  high: { icon: '⛔', label: 'High' },
-  medium: { icon: '⚠️', label: 'Medium' },
-  low: { icon: '💡', label: 'Low' },
+  high: { icon: '▲', label: 'High' },
+  medium: { icon: '■', label: 'Medium' },
+  low: { icon: '●', label: 'Low' },
 };
 
 const ReviewView = ({ review }: { review: Review }) => {
   const badge = [review.language, review.framework].filter(Boolean).join(' · ');
 
   return (
-    <div className="review-view">
-      {badge && <p className="review-view__badge">{badge}</p>}
+    <div className={styles.reviewView}>
+      {badge && <p className={styles.reviewViewBadge}>{badge}</p>}
 
-      <div className="review-view__score">
-        <span className="review-view__score-label">Score</span>
-        <span className="review-view__score-value">
+      <div className={styles.reviewViewScore}>
+        <span className={styles.reviewViewScoreLabel}>Score</span>
+        <span className={styles.reviewViewScoreValue}>
           {review.score.toFixed(1)} <span>/ 10</span>
         </span>
       </div>
 
-      <section className="review-view__section">
-        <h2 className="review-view__heading">Summary</h2>
-        <p className="review-view__summary">{review.summary}</p>
+      <section className={styles.reviewViewSection}>
+        <h2 className={styles.reviewViewHeading}>Summary</h2>
+        <p className={styles.reviewViewSummary}>{review.summary}</p>
       </section>
 
-      <section className="review-view__section">
-        <h2 className="review-view__heading">Issues</h2>
+      <section className={styles.reviewViewSection}>
+        <h2 className={styles.reviewViewHeading}>Issues</h2>
         {review.issues.length === 0 ? (
-          <p className="review-view__empty">No issues found.</p>
+          <p className={styles.reviewViewEmpty}>No issues found.</p>
         ) : (
-          <ul className="review-view__issues">
+          <ul className={styles.reviewViewIssues}>
             {review.issues.map((issue, index) => {
               const meta = SEVERITY_META[issue.severity] ?? SEVERITY_META.low;
+              const severityClass = `reviewViewIssue${issue.severity[0].toUpperCase()}${issue.severity.slice(1)}`;
               return (
                 <li
                   key={index}
-                  className={`review-view__issue review-view__issue--${issue.severity}`}
+                  className={`${styles.reviewViewIssue} ${styles[severityClass]}`}
                 >
-                  <p className="review-view__issue-head">
-                    <span className="review-view__issue-severity">
+                  <p className={styles.reviewViewIssueHead}>
+                    <span className={styles.reviewViewIssueSeverity}>
                       {meta.icon} {meta.label}
                     </span>
-                    <span className="review-view__issue-category">{issue.category}</span>
+                    <span className={styles.reviewViewIssueCategory}>
+                      {issue.category}
+                    </span>
                     {issue.line != null && (
-                      <span className="review-view__issue-line">Line {issue.line}</span>
+                      <span className={styles.reviewViewIssueLine}>
+                        Line {issue.line}
+                      </span>
                     )}
                   </p>
-                  <p className="review-view__issue-message">{issue.message}</p>
+                  <p className={styles.reviewViewIssueMessage}>{issue.message}</p>
                   {issue.suggestion && (
-                    <p className="review-view__issue-suggestion">{issue.suggestion}</p>
+                    <p className={styles.reviewViewIssueSuggestion}>
+                      {issue.suggestion}
+                    </p>
                   )}
                 </li>
               );

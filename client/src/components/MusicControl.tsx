@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Howl } from 'howler';
-import '@/components/MusicControl.scss';
+import styles from '@/components/MusicControl.module.scss';
 
 const sound = new Howl({ src: ['/matrix.mp3'], loop: true, volume: 0.8 });
 
@@ -23,7 +23,7 @@ const startAudioOnInteraction = () => {
   interactionEnabled = true;
   const handler = (event: Event) => {
     const target = event.target as HTMLElement | null;
-    if (target?.closest('.music-control__button')) return;
+    if (target?.closest('[data-music-control]')) return;
     cleanup();
     playAudio();
   };
@@ -55,10 +55,11 @@ const MusicControl = () => {
   }, []);
 
   return (
-    <div className="music-control">
+    <div className={styles.musicControl}>
       <button
         type="button"
-        className="music-control__button"
+        className={styles.musicControlButton}
+        data-music-control
         onClick={toggleAudio}
         aria-label={playing ? 'Pause music' : 'Play music'}
       >

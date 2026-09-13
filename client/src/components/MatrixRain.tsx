@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import '@/components/MatrixRain.scss';
+import styles from '@/components/MatrixRain.module.scss';
 
 const GLYPHS = 'アイウエオカキクケコ0123456789<>/{}[]#';
 const FONT_SIZE = 18;
@@ -88,7 +88,7 @@ const MatrixRain = () => {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="matrix-rain" />;
+  return <canvas ref={canvasRef} className={styles.matrixRain} />;
 };
 
 export default MatrixRain;
