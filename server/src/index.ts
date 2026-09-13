@@ -11,7 +11,7 @@ app.get('/', (_req, res) => {
   res.json({ message: 'CodeLens AI server is running.' });
 });
 
-const opencode = await createOpencodeServer({ timeout: 30000 });
+const opencode = await createOpencodeServer({ timeout: 30000, port: 0 });
 const client = createOpencodeClient({ baseUrl: opencode.url });
 
 app.post('/api/review', async (req, res) => {
@@ -35,10 +35,21 @@ app.listen(PORT, () => {
 
 // Shut down the embedded opencode server when the API server stops.
 // Without this, the spawned `opencode serve` process would orphan and keep
-// holding port 4096, breaking the next run with a "port already in use" error.
+// holding its port, breaking the next run with a "port already in use" error.
+const shutdown = () => {
+  opencode.close();
+  process.exit(0);
+};
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.on(signal, () => {
-    opencode.close();
-    process.exit(0);
-  });
+  process.on(signal, shutdown);
 }
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  opencode.close();
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason);
+  opencode.close();
+  process.exit(1);
+});

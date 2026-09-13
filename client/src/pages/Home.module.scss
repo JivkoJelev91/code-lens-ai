@@ -10,7 +10,7 @@
     display: grid;
     grid-template-rows: auto 1fr auto;
     width: 100%;
-    max-width: 1200px;
+    max-width: 1400px;
     height: 82svh;
     min-height: 480px;
     border: 1px solid;
@@ -87,6 +87,27 @@
     margin: 0;
     font-size: 12px;
     opacity: 0.7;
+  }
+
+  &__typing {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--matrix-green);
+    opacity: 0.8;
+  }
+
+  &__typingCursor {
+    display: inline-block;
+    width: 8px;
+    height: 12px;
+    background: var(--matrix-green);
+    box-shadow: 0 0 6px var(--matrix-green);
+    animation: home-typing-blink 0.7s steps(1) infinite;
   }
 
   &__submit {
@@ -175,5 +196,11 @@
 
   40% {
     opacity: 1;
+  }
+}
+
+@keyframes home-typing-blink {
+  50% {
+    opacity: 0;
   }
 }

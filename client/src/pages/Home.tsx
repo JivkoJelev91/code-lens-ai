@@ -5,14 +5,23 @@ import MusicControl from '@/components/MusicControl';
 import ReviewView, { type Review } from '@/components/ReviewView';
 import styles from '@/pages/Home.module.scss';
 
+const CODE_STORAGE_KEY = 'code-lens:code';
+
 const Home = () => {
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(
+    () => sessionStorage.getItem(CODE_STORAGE_KEY) ?? ''
+  );
   const [review, setReview] = useState<Review | null>(null);
   const [reviewedCode, setReviewedCode] = useState('');
   const [reviewSeq, setReviewSeq] = useState(0);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const reviewed = review !== null && code === reviewedCode;
+
+  const handleCodeChange = (value: string) => {
+    setCode(value);
+    sessionStorage.setItem(CODE_STORAGE_KEY, value);
+  };
 
   const handleReview = async () => {
     if (!code.trim() || reviewed) return;
@@ -55,12 +64,17 @@ const Home = () => {
             <label className={styles.homeLabel}>
               code
             </label>
-            <CodeEditor value={code} onChange={setCode} />
+            <CodeEditor value={code} onChange={handleCodeChange} />
           </section>
 
           <section className={styles.homePane}>
             <span className={styles.homeLabel}>review</span>
-            {error ? (
+            {loading ? (
+              <p className={styles.homeTyping}>
+                CodeLens Typing
+                <span className={styles.homeTypingCursor} />
+              </p>
+            ) : error ? (
               <p className={styles.homeStatus}>{error}</p>
             ) : review ? (
               <ReviewView key={reviewSeq} review={review} />
