@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import MatrixRain from '@/components/MatrixRain';
-import MusicToggle from '@/components/MusicToggle';
+import MusicControl from '@/components/MusicControl';
 import ReviewView, { type Review } from '@/components/ReviewView';
 import '@/pages/Home.scss';
 
@@ -34,7 +34,6 @@ const Home = () => {
   return (
     <main className="home">
       <MatrixRain />
-      <MusicToggle />
 
       <section className="home__window">
         <header className="home__bar">
@@ -42,7 +41,7 @@ const Home = () => {
           <span className="home__dot" />
           <span className="home__dot" />
           <h1 className="home__title">CodeLens AI</h1>
-          <MusicToggle />
+          <MusicControl />
         </header>
 
         <div className="home__split">
