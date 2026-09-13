@@ -3,13 +3,32 @@ import MatrixRain from '@/components/MatrixRain';
 import MusicToggle from '@/components/MusicToggle';
 import '@/pages/Home.scss';
 
-const LANGUAGES = ['TypeScript', 'JavaScript', 'React', 'JSON'] as const
-
-type Language = (typeof LANGUAGES)[number]
-
 const Home = () => {
-  const [language, setLanguage] = useState<Language>('TypeScript')
   const [code, setCode] = useState('')
+  const [review, setReview] = useState<Record<string, unknown> | null>(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleReview = async () => {
+    if (!code.trim()) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Review failed.')
+      setReview(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Review failed.')
+      setReview(null)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <main className="home">
@@ -26,24 +45,6 @@ const Home = () => {
         </div>
 
         <div className="home__body">
-          <label className="home__label" htmlFor="language">
-            language
-          </label>
-          <div className="home__select-wrap">
-            <select
-              id="language"
-              className="home__select"
-              value={language}
-              onChange={(event) => setLanguage(event.target.value as Language)}
-            >
-              {LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <label className="home__label" htmlFor="code">
             code
           </label>
@@ -56,9 +57,19 @@ const Home = () => {
             spellCheck={false}
           />
 
-          <button type="button" className="home__submit">
-            {'> '}review code
+          <button
+            type="button"
+            className="home__submit"
+            onClick={handleReview}
+            disabled={loading}
+          >
+            {'> '}{loading ? 'reviewing...' : 'review code'}
           </button>
+
+          {error && <p className="home__status">{error}</p>}
+          {review && (
+            <pre className="home__stream">{JSON.stringify(review, null, 2)}</pre>
+          )}
         </div>
       </section>
     </main>
