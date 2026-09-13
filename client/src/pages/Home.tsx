@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import MatrixRain from '@/components/MatrixRain'
-import '@/pages/Home.scss'
+import { useState } from 'react';
+import MatrixRain from '@/components/MatrixRain';
+import MusicToggle from '@/components/MusicToggle';
+import '@/pages/Home.scss';
 
 const LANGUAGES = ['TypeScript', 'JavaScript', 'React', 'JSON'] as const
 
@@ -13,6 +14,7 @@ const Home = () => {
   return (
     <main className="home">
       <MatrixRain />
+      <MusicToggle />
 
       <section className="home__window">
         <div className="home__bar">
@@ -20,6 +22,7 @@ const Home = () => {
           <span className="home__dot" />
           <span className="home__dot" />
           <code className="home__path">root@matrix:~# code --review</code>
+          <MusicToggle />
         </div>
 
         <div className="home__body">
