@@ -25,7 +25,7 @@ app.post('/api/review', async (req, res) => {
     res.json(review);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Review failed.' });
+    res.status(500).json({ error: 'Review failed, try again!' });
   }
 });
 

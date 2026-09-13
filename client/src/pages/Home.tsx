@@ -6,33 +6,36 @@ import ReviewView, { type Review } from '@/components/ReviewView';
 import styles from '@/pages/Home.module.scss';
 
 const Home = () => {
-  const [code, setCode] = useState('')
-  const [review, setReview] = useState<Review | null>(null)
-  const [reviewSeq, setReviewSeq] = useState(0)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [code, setCode] = useState('');
+  const [review, setReview] = useState<Review | null>(null);
+  const [reviewedCode, setReviewedCode] = useState('');
+  const [reviewSeq, setReviewSeq] = useState(0);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const reviewed = review !== null && code === reviewedCode;
 
   const handleReview = async () => {
-    if (!code.trim()) return
-    setLoading(true)
-    setError('')
+    if (!code.trim() || reviewed) return;
+    setLoading(true);
+    setError('');
     try {
       const res = await fetch('/api/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Review failed.')
-      setReview(data)
-      setReviewSeq((seq) => seq + 1)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Review failed, try again!');
+      setReview(data);
+      setReviewedCode(code);
+      setReviewSeq((seq) => seq + 1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Review failed.')
-      setReview(null)
+      setError(err instanceof Error ? err.message : 'Review failed.');
+      setReview(null);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <main className={styles.home}>
@@ -56,18 +59,9 @@ const Home = () => {
           </section>
 
           <section className={styles.homePane}>
-            <label className={styles.homeLabel}>review</label>
+            <span className={styles.homeLabel}>review</span>
             {error ? (
-              <>
-                <p className={styles.homeStatus}>{error}</p>
-                <button
-                  type="button"
-                  className={styles.homeRetry}
-                  onClick={handleReview}
-                >
-                  try again
-                </button>
-              </>
+              <p className={styles.homeStatus}>{error}</p>
             ) : review ? (
               <ReviewView key={reviewSeq} review={review} />
             ) : (
@@ -80,10 +74,10 @@ const Home = () => {
           type="button"
           className={styles.homeSubmit}
           onClick={handleReview}
-          disabled={loading || !code.trim()}
+          disabled={loading || !code.trim() || reviewed}
           data-loading={loading}
         >
-          {'> '}review code
+          {'> '}{error ? 'try again' : reviewed ? 'reviewed' : 'review code'}
           {loading && (
             <span className={styles.homeDots} aria-hidden="true">
               <span />
@@ -94,7 +88,7 @@ const Home = () => {
         </button>
       </section>
     </main>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
