@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import CodeEditor from '@/components/CodeEditor';
 import MatrixRain from '@/components/MatrixRain';
 import MusicControl from '@/components/MusicControl';
 import ReviewView, { type Review } from '@/components/ReviewView';
@@ -48,17 +49,10 @@ const Home = () => {
 
         <div className={styles.homeSplit}>
           <section className={styles.homePane}>
-            <label className={styles.homeLabel} htmlFor="code">
+            <label className={styles.homeLabel}>
               code
             </label>
-            <textarea
-              id="code"
-              className={styles.homeCode}
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              placeholder="const users = ..."
-              spellCheck={false}
-            />
+            <CodeEditor value={code} onChange={setCode} />
           </section>
 
           <section className={styles.homePane}>

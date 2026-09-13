@@ -75,27 +75,6 @@
     opacity: 0.7;
   }
 
-  &__code {
-    flex: 1;
-    width: 100%;
-    min-height: 0;
-    padding: 10px;
-    font: inherit;
-    color: inherit;
-    background: transparent;
-    border: 1px solid rgba(0, 255, 65, 0.4);
-    resize: none;
-
-    &::placeholder {
-      opacity: 0.4;
-    }
-
-    &:focus {
-      outline: none;
-      border-color: var(--matrix-green);
-    }
-  }
-
   &__placeholder {
     flex: 1;
     margin: 0;
@@ -196,12 +175,6 @@
         border-left: 0;
         border-top: 1px solid;
       }
-    }
-
-    &__code {
-      flex: 1;
-      min-height: 28svh;
-      field-sizing: content;
     }
 
     &__placeholder {

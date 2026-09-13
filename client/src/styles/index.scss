@@ -52,3 +52,13 @@ body {
   background: var(--matrix-green);
   color: #000;
 }
+
+.monaco-editor,
+.monaco-editor-background,
+.monaco-editor .margin {
+  background-color: transparent !important;
+}
+
+.monaco-editor .scrollbar .slider {
+  border-radius: 6px;
+}
