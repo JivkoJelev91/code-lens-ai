@@ -28,6 +28,27 @@
     font-size: 12px;
   }
 
+  &__barActions {
+    @include flex-center($gap: 10px);
+    margin-left: auto;
+  }
+
+  &__newReview {
+    padding: 3px 12px;
+    font: inherit;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: inherit;
+    background: transparent;
+    border: 1px solid var(--matrix-green-soft);
+    cursor: pointer;
+
+    &:hover {
+      box-shadow: 0 0 14px var(--matrix-green-glow);
+    }
+  }
+
   &__dot {
     width: 10px;
     height: 10px;

@@ -46,6 +46,12 @@ const Home = () => {
     }
   };
 
+  const handleNewReview = () => {
+    setReview(null);
+    setReviewedCode('');
+    setError('');
+  };
+
   return (
     <main className={styles.home}>
       <MatrixRain />
@@ -56,7 +62,18 @@ const Home = () => {
           <span className={styles.homeDot} />
           <span className={styles.homeDot} />
           <h1 className={styles.homeTitle}>CodeLens AI</h1>
-          <MusicControl />
+          <div className={styles.homeBarActions}>
+            {review && !loading && (
+              <button
+                type="button"
+                className={styles.homeNewReview}
+                onClick={handleNewReview}
+              >
+                new review
+              </button>
+            )}
+            <MusicControl />
+          </div>
         </header>
 
         <div className={styles.homeSplit}>

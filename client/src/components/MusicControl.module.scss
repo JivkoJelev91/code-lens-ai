@@ -2,7 +2,6 @@
 
 .music-control {
   @include flex-center;
-  margin-left: auto;
 
   &__button {
     @include grid-center;
