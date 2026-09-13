@@ -1,7 +1,7 @@
+@use '../styles/mixins' as *;
+
 .review-view {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  @include flex-column($gap: 14px);
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -16,9 +16,7 @@
   }
 
   &__score {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
+    @include flex-center($align: baseline, $gap: 10px);
   }
 
   &__score-label {
@@ -46,9 +44,7 @@
   }
 
   &__section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    @include flex-column($gap: 8px);
   }
 
   &__heading {
@@ -72,18 +68,14 @@
   }
 
   &__issues {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    @include flex-column($gap: 10px);
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
   &__issue {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    @include flex-column($gap: 6px);
     padding: 10px;
     border: 1px solid var(--matrix-green-muted);
     background: var(--matrix-green-faint);
@@ -101,9 +93,7 @@
   }
 
   &__issue-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    @include flex-center($gap: 8px);
     margin: 0;
     font-size: 11px;
     flex-wrap: wrap;

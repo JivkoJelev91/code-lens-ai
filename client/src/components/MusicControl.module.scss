@@ -1,11 +1,11 @@
+@use '../styles/mixins' as *;
+
 .music-control {
-  display: flex;
-  align-items: center;
+  @include flex-center;
   margin-left: auto;
 
   &__button {
-    display: grid;
-    place-items: center;
+    @include grid-center;
     width: 26px;
     height: 26px;
     padding: 0;
