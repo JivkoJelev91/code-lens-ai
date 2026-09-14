@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import type { OpencodeClient } from '@opencode-ai/sdk';
 import { reviewSchema, type Review } from './schemas.js';
+import { logger } from './logger.js';
 
 export type { Review, Issue } from './schemas.js';
 
@@ -53,7 +54,7 @@ export async function reviewCode(client: OpencodeClient, code: string): Promise<
   }
   const result = reviewSchema.safeParse(parsed);
   if (!result.success) {
-    console.error('AI response validation failed:', result.error);
+    logger.error({ err: result.error }, 'AI response validation failed');
     throw new Error('AI response is missing required fields.');
   }
   return result.data;

@@ -1,7 +1,7 @@
 @use '../styles/mixins' as *;
 
 .music-control {
-  @include flex-center;
+  @include flex-center($gap: 8px);
 
   &__button {
     @include grid-center;
@@ -23,5 +23,16 @@
     &:hover {
       box-shadow: 0 0 14px var(--matrix-green-glow);
     }
+  }
+
+  &__status {
+    display: inline-block;
+    min-width: 118px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--matrix-green);
+    opacity: 0.75;
+    white-space: nowrap;
+    text-align: right;
   }
 }

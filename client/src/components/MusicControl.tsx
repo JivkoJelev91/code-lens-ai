@@ -56,6 +56,11 @@ const MusicControl = () => {
 
   return (
     <div className={styles.musicControl}>
+<span className={styles.musicControlStatus} aria-live="polite">
+        {playing
+          ? 'Matrix.mp3 running'
+          : 'Matrix.mp3 paused'}
+      </span>
       <button
         type="button"
         className={styles.musicControlButton}
