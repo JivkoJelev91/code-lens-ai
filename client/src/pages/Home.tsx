@@ -9,7 +9,7 @@ const CODE_STORAGE_KEY = 'code-lens:code';
 
 const Home = () => {
   const [code, setCode] = useState(
-    () => sessionStorage.getItem(CODE_STORAGE_KEY) ?? ''
+    () => localStorage.getItem(CODE_STORAGE_KEY) ?? ''
   );
   const [review, setReview] = useState<Review | null>(null);
   const [reviewedCode, setReviewedCode] = useState('');
@@ -20,7 +20,7 @@ const Home = () => {
 
   const handleCodeChange = (value: string) => {
     setCode(value);
-    sessionStorage.setItem(CODE_STORAGE_KEY, value);
+    localStorage.setItem(CODE_STORAGE_KEY, value);
   };
 
   const handleReview = async () => {

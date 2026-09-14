@@ -1,55 +1,104 @@
-import express from 'express';
+import express, { type ErrorRequestHandler } from 'express';
+import helmet from 'helmet';
+import type { OpencodeClient } from '@opencode-ai/sdk';
 import { createOpencodeClient, createOpencodeServer } from '@opencode-ai/sdk';
 import { reviewCode } from './ai.js';
+import { rateLimit } from './middleware.js';
+import { reviewRequestSchema } from './schemas.js';
+
+const TIMEOUT = 30_000;
+
+const PORT = Number(process.env.PORT ?? 4001);
+const HOST = process.env.HOST ?? '0.0.0.0';
+
+const timeout = (ms: number) =>
+  new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('TIMEOUT')), ms),
+  );
 
 const app = express();
-const PORT = 4001;
 
-app.use(express.json());
+app.set('trust proxy', 1);
+app.use(helmet());
+app.use(express.json({ limit: '128kb' }));
 
 app.get('/', (_req, res) => {
   res.json({ message: 'CodeLens AI server is running.' });
 });
 
-const opencode = await createOpencodeServer({ timeout: 30000, port: 0 });
-const client = createOpencodeClient({ baseUrl: opencode.url });
+let client!: OpencodeClient;
 
-app.post('/api/review', async (req, res) => {
-  const { code } = req.body;
-  if (typeof code !== 'string' || code.trim() === '') {
-    res.status(400).json({ error: 'Missing or empty "code".' });
+app.post('/api/review', rateLimit, async (req, res) => {
+  const parsed = reviewRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res
+      .status(400)
+      .json({ error: parsed.error.issues[0]?.message ?? 'Invalid request.' });
     return;
   }
+
   try {
-    const review = await reviewCode(client, code);
+    const review = await Promise.race([
+      reviewCode(client, parsed.data.code),
+      timeout(TIMEOUT),
+    ]);
     res.json(review);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Review failed, try again!' });
+    const isTimeout = error instanceof Error && error.message === 'TIMEOUT';
+    res.status(isTimeout ? 504 : 500).json({
+      error: isTimeout
+        ? 'Review timed out. Please try again.'
+        : 'Review failed, try again!',
+    });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
-});
+const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+  if (res.headersSent) return;
+  const { status, type } = error as { status?: number; type?: string };
 
-// Shut down the embedded opencode server when the API server stops.
-// Without this, the spawned `opencode serve` process would orphan and keep
-// holding its port, breaking the next run with a "port already in use" error.
-const shutdown = () => {
-  opencode.close();
-  process.exit(0);
+  if (type === 'entity.parse.failed') {
+    res.status(400).json({ error: 'Invalid JSON in request body.' });
+  } else if (status === 413) {
+    res.status(413).json({ error: 'Request body too large.' });
+  } else if (status !== undefined && status >= 400 && status < 500) {
+    res.status(status).json({ error: 'Request could not be processed.' });
+  } else {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
 };
-for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.on(signal, shutdown);
+app.use(errorHandler);
+
+async function main() {
+  const opencode = await createOpencodeServer({ timeout: TIMEOUT, port: 0 });
+  client = createOpencodeClient({ baseUrl: opencode.url });
+
+  app.listen(PORT, HOST, () => {
+    console.log(`Server listening on http://localhost:${PORT}`);
+  });
+
+  const shutdown = () => {
+    opencode.close();
+    process.exit(0);
+  };
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.on(signal, shutdown);
+  }
+  process.on('uncaughtException', (error) => {
+    console.error('Uncaught exception:', error);
+    opencode.close();
+    process.exit(1);
+  });
+  process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled rejection:', reason);
+    opencode.close();
+    process.exit(1);
+  });
 }
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception:', error);
-  opencode.close();
-  process.exit(1);
-});
-process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled rejection:', reason);
-  opencode.close();
+
+main().catch((error) => {
+  console.error('Failed to start server:', error);
   process.exit(1);
 });

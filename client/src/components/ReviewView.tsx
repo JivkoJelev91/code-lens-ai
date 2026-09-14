@@ -17,8 +17,6 @@ export type Review = {
   score: number;
   summary: string;
   issues: Issue[];
-  improvements: string[];
-  refactoredCode: string;
 };
 
 const SEVERITY_META: Record<Severity, { icon: string; label: string }> = {
@@ -28,10 +26,10 @@ const SEVERITY_META: Record<Severity, { icon: string; label: string }> = {
 };
 
 const buildReview = (review: Review) => {
-  const rows: string[] = [];
-  const issueStarts: number[] = [];
+  const lines: string[] = [];
+  const issuesIndex: number[] = [];
 
-  const push = (text: string) => rows.push(text);
+  const push = (text: string) => lines.push(text);
 
   push([review.language, review.framework].filter(Boolean).join(' · '));
   push('Score');
@@ -41,13 +39,13 @@ const buildReview = (review: Review) => {
 
   if (review.issues.length === 0) {
     push('No issues found.');
-    return { rows, issueStarts };
+    return { lines, issuesIndex };
   }
 
   push('Issues');
   review.issues.forEach((issue) => {
     const { icon, label } = SEVERITY_META[issue.severity] ?? SEVERITY_META.low;
-    issueStarts.push(rows.length);
+    issuesIndex.push(lines.length);
     push(`${icon} ${label}`);
     push(issue.category);
     push(issue.line != null ? `Line ${issue.line}` : '');
@@ -55,12 +53,12 @@ const buildReview = (review: Review) => {
     push(issue.suggestion);
   });
 
-  return { rows, issueStarts };
+  return { lines, issuesIndex };
 };
 
 const ReviewView = ({ review }: { review: Review }) => {
-  const lines = buildReview(review);
-  const { typed, activeLine, line, skip } = useTypewriter(lines.rows);
+  const { lines, issuesIndex } = buildReview(review);
+  const { typed, activeLine, line, skip } = useTypewriter(lines);
 
   const segment = (slot: { text: string; active: boolean }) => (
     <>
@@ -93,7 +91,11 @@ const ReviewView = ({ review }: { review: Review }) => {
             <h2 className={styles.reviewViewHeading}>{seg(5)}</h2>
             <ul className={styles.reviewViewIssues}>
               {review.issues
-                .map((issue, index) => ({ issue, index, base: 6 + index * 5 }))
+                .map((issue, index) => ({
+                  issue,
+                  index,
+                  base: issuesIndex[index],
+                }))
                 .filter(({ base }) => line >= base)
                 .map(({ issue, index, base }) => (
                   <li
