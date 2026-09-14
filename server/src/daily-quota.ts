@@ -18,7 +18,7 @@ const nextMidnightUtcMs = () => {
 };
 
 export function dailyQuota(req: Request, res: Response, next: NextFunction) {
-  const id = (req as { sessionId?: string }).sessionId;
+  const id = req.sessionId;
   if (!id) return next();
 
   const now = Date.now();

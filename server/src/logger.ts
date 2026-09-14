@@ -30,7 +30,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
         status: res.statusCode,
         durationMs,
         ip: req.ip,
-        sessionId: (req as { sessionId?: string }).sessionId,
+        sessionId: req.sessionId,
       },
       'request completed',
     );

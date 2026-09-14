@@ -1,48 +1,34 @@
 # CodeLens AI
 
-AI-powered code review assistant for JavaScript, TypeScript and React applications. It provides multi-file analysis, conversational reviews and automated refactoring suggestions.
+AI-powered code review assistant. Paste code, get a structured review with severity-ranked issues and actionable suggestions. Matrix-themed interface.
 
-## Project structure
+Currently supports single-file analysis for any programming language.
 
-```
-code-lens-ai/
-│
-├── client/          React + TypeScript + Vite frontend
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── hooks/
-│   └── ...
-│
-├── server/          Node.js + Express + TypeScript backend
-│   └── src/
-│       ├── routes/
-│       ├── services/
-│       └── ai/
-│
-└── README.md
-```
+## Run locally
 
-## Getting started
-
-Requirements: Node.js 20+ and npm.
+Requirements: Node.js 20+ and pnpm.
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
-- Client: http://localhost:4000 (Vite)
-- Server: http://localhost:4001 (Express)
-
-The client proxies `/api` requests to the server during development.
+- Client: http://localhost:4000
+- Server: http://localhost:4001
 
 ## Scripts
 
-| Command             | Description                              |
-| ------------------- | ---------------------------------------- |
-| `npm run dev`       | Run client and server in watch mode      |
-| `npm run build`     | Build client and server for production   |
-| `npm start`         | Start the compiled server                |
-| `npm run lint`      | Lint client and server with Oxlint       |
-| `npm run typecheck` | Type-check both workspaces               |
+| Command             | Description                           |
+| ------------------- | ------------------------------------- |
+| `pnpm dev`          | Run client and server in watch mode   |
+| `pnpm build`        | Build client and server for production|
+| `pnpm start`        | Start the compiled server             |
+| `pnpm lint`         | Lint with Oxlint                      |
+| `pnpm typecheck`    | Type-check both workspaces            |
+
+## Roadmap
+
+- Multi-file analysis
+- Code explanation
+- Code fixing
+- User authentication

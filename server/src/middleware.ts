@@ -16,7 +16,7 @@ function rateLimitFor(
   message: string,
 ) {
   const requesterId = (req: Request) =>
-    `${req.ip ?? 'unknown'}:${(req as { sessionId?: string }).sessionId ?? 'nosession'}`;
+    `${req.ip ?? 'unknown'}:${req.sessionId ?? 'nosession'}`;
 
   return (req: Request, res: Response, next: NextFunction) => {
     const key = hashKey(requesterId(req));
@@ -83,7 +83,7 @@ export const anonymousSession: RequestHandler = async (req, _res, next) => {
       req.session!.regenerate((err) => (err ? reject(err) : resolve()));
     });
   }
-  (req as { sessionId?: string }).sessionId = req.session.id;
+  req.sessionId = req.session.id;
   next();
 };
 
