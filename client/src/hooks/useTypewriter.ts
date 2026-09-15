@@ -10,11 +10,11 @@ export const useTypewriter = (lines: string[]) => {
   const done = line >= lines.length;
   const current = lines[line] ?? '';
 
-  const typed = lines.map((text, index) => {
-    if (index < line) return text;
-    if (index === line) return text.slice(0, char);
+  const typedAt = (index: number) => {
+    if (index < line) return lines[index] ?? '';
+    if (index === line) return current.slice(0, char);
     return '';
-  });
+  };
 
   useEffect(() => {
     if (done) return;
@@ -40,5 +40,5 @@ export const useTypewriter = (lines: string[]) => {
     setChar(0);
   };
 
-  return { typed, activeLine: done ? -1 : line, line, done, skip };
+  return { typedAt, activeLine: done ? -1 : line, line, done, skip };
 }

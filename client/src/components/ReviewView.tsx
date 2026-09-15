@@ -58,7 +58,7 @@ const buildReview = (review: Review) => {
 
 const ReviewView = ({ review }: { review: Review }) => {
   const { lines, issuesIndex } = buildReview(review);
-  const { typed, activeLine, line, skip } = useTypewriter(lines);
+  const { typedAt, activeLine, line, skip } = useTypewriter(lines);
 
   const segment = (slot: { text: string; active: boolean }) => (
     <>
@@ -67,11 +67,11 @@ const ReviewView = ({ review }: { review: Review }) => {
     </>
   );
   const seg = (index: number) =>
-    segment({ text: typed[index], active: index === activeLine });
+    segment({ text: typedAt(index), active: index === activeLine });
 
   return (
     <div className={styles.reviewView} onClick={skip}>
-      {typed[0] && <p className={styles.reviewViewBadge}>{seg(0)}</p>}
+      {typedAt(0) && <p className={styles.reviewViewBadge}>{seg(0)}</p>}
 
       <div className={styles.reviewViewScore}>
         <span className={styles.reviewViewScoreLabel}>{seg(1)}</span>
@@ -109,7 +109,7 @@ const ReviewView = ({ review }: { review: Review }) => {
                       <span className={styles.reviewViewIssueCategory}>
                         {seg(base + 1)}
                       </span>
-                      {typed[base + 2] && (
+                      {typedAt(base + 2) && (
                         <span className={styles.reviewViewIssueLine}>
                           {seg(base + 2)}
                         </span>
@@ -118,7 +118,7 @@ const ReviewView = ({ review }: { review: Review }) => {
                     <p className={styles.reviewViewIssueMessage}>
                       {seg(base + 3)}
                     </p>
-                    {typed[base + 4] && (
+                    {typedAt(base + 4) && (
                       <p className={styles.reviewViewIssueSuggestion}>
                         {seg(base + 4)}
                       </p>

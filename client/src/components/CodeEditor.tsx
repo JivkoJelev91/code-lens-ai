@@ -4,6 +4,7 @@ import styles from '@/components/CodeEditor.module.scss';
 type CodeEditorProps = {
   value: string;
   onChange: (value: string) => void;
+  language?: string;
 };
 
 const defineTheme = (monaco: Monaco) => {
@@ -37,24 +38,28 @@ const defineTheme = (monaco: Monaco) => {
   });
 };
 
-const CodeEditor = ({ value, onChange }: CodeEditorProps) => (
-  <Editor
-    className={styles.codeEditor}
-    height="100%"
-    language="javascript"
-    theme="code-lens"
-    value={value}
-    onChange={(next) => onChange(next ?? '')}
-    beforeMount={defineTheme}
-    options={{
-      minimap: { enabled: false },
-      fontSize: 13,
-      padding: { top: 10 },
-      scrollBeyondLastLine: false,
-      lineNumbersMinChars: 3,
-    }}
-    loading={<span className={styles.codeEditorLoading}>loading editor…</span>}
-  />
-);
+const CodeEditor = ({ value, onChange, language }: CodeEditorProps) => {
+  const lang = language  ?language.toLowerCase() : 'javascript';
+
+  return (
+    <Editor
+      className={styles.codeEditor}
+      height="100%"
+      language={lang}
+      theme="code-lens"
+      value={value}
+      onChange={(next) => onChange(next ?? '')}
+      beforeMount={defineTheme}
+      options={{
+        minimap: { enabled: false },
+        fontSize: 13,
+        padding: { top: 10 },
+        scrollBeyondLastLine: false,
+        lineNumbersMinChars: 3,
+      }}
+      loading={<span className={styles.codeEditorLoading}>loading editor…</span>}
+    />
+  );
+};
 
 export default CodeEditor;

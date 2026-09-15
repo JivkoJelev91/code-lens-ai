@@ -1,47 +1,75 @@
-import { useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import CodeEditor from '@/components/CodeEditor';
 import MatrixRain from '@/components/MatrixRain';
-import MusicControl from '@/components/MusicControl';
 import ReviewView, { type Review } from '@/components/ReviewView';
+import { debounce, getLocalStorage, setLocalStorage } from '@/utils';
 import styles from '@/pages/Home.module.scss';
 
+const MusicControl = lazy(() => import('@/components/MusicControl'));
+
 const CODE_STORAGE_KEY = 'code-lens:code';
+const CODE_STORE_DELAY = 500;
+
+const persistCode = debounce((value: string) => {
+  setLocalStorage(CODE_STORAGE_KEY, value);
+}, CODE_STORE_DELAY);
 
 const Home = () => {
-  const [code, setCode] = useState(
-    () => localStorage.getItem(CODE_STORAGE_KEY) ?? ''
-  );
+  const [code, setCode] = useState(() => getLocalStorage(CODE_STORAGE_KEY));
   const [review, setReview] = useState<Review | null>(null);
   const [reviewedCode, setReviewedCode] = useState('');
   const [reviewSeq, setReviewSeq] = useState(0);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const reviewed = review !== null && code === reviewedCode;
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      persistCode.flush();
+    };
+  }, []);
 
   const handleCodeChange = (value: string) => {
     setCode(value);
-    localStorage.setItem(CODE_STORAGE_KEY, value);
+    persistCode(value);
   };
 
   const handleReview = async () => {
     if (!code.trim() || reviewed) return;
     setLoading(true);
     setError('');
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       const res = await fetch('/api/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
+        signal: controller.signal,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Review failed, try again!');
-      setReview(data);
+      const text = await res.text();
+      let data: unknown = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(
+          ((data as { error?: string })?.error || 'Review failed, try again!'),
+        );
+      }
+      setReview(data as Review);
       setReviewedCode(code);
       setReviewSeq((seq) => seq + 1);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'Review failed.');
       setReview(null);
     } finally {
+      abortRef.current = null;
       setLoading(false);
     }
   };
@@ -72,7 +100,9 @@ const Home = () => {
                 new review
               </button>
             )}
-            <MusicControl />
+            <Suspense fallback={null}>
+              <MusicControl />
+            </Suspense>
           </div>
         </header>
 
@@ -81,7 +111,11 @@ const Home = () => {
             <label className={styles.homeLabel}>
               code
             </label>
-            <CodeEditor value={code} onChange={handleCodeChange} />
+            <CodeEditor
+              value={code}
+              onChange={handleCodeChange}
+              language={review?.language}
+            />
           </section>
 
           <section
