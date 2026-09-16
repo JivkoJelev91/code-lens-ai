@@ -29,6 +29,7 @@ export interface ExpiringStore {
   set(key: string, entry: ExpiringEntry): void;
   delete(key: string): boolean;
   readonly size: number;
+  dispose(): void;
 }
 
 const DEFAULT_MAX_ENTRIES = 100_000;
@@ -45,6 +46,8 @@ export const createExpiringStore = (
     }
   }, sweepIntervalMs);
   timer.unref();
+
+  let disposed = false;
 
   const evictIfFull = () => {
     if (store.size < maxEntries) return;
@@ -63,14 +66,32 @@ export const createExpiringStore = (
   };
 
   return {
-    get: (key) => store.get(key),
+    get: (key) => {
+      if (disposed) return undefined;
+      const entry = store.get(key);
+      if (entry && entry.resetAt <= Date.now()) {
+        store.delete(key);
+        return undefined;
+      }
+      return entry;
+    },
     set: (key, entry) => {
+      if (disposed) return;
       evictIfFull();
       store.set(key, entry);
     },
-    delete: (key) => store.delete(key),
+    delete: (key) => {
+      if (disposed) return false;
+      return store.delete(key);
+    },
     get size() {
       return store.size;
+    },
+    dispose: () => {
+      if (disposed) return;
+      disposed = true;
+      clearInterval(timer);
+      store.clear();
     },
   };
 };
