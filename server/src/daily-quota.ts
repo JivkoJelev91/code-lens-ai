@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
-import { createExpiringStore, type ExpiringEntry } from './utils.js';
+import { createExpiringStore, hashKey, type ExpiringStore } from './utils.js';
 
 const DAILY_QUOTA_MAX = 100;
 const CLEANUP_INTERVAL_MS = 60_000;
 
-const store: Map<string, ExpiringEntry> = createExpiringStore(CLEANUP_INTERVAL_MS);
+const store: ExpiringStore = createExpiringStore(CLEANUP_INTERVAL_MS);
 
 const nextMidnightUtcMs = () => {
   const now = new Date();
@@ -17,17 +17,16 @@ const nextMidnightUtcMs = () => {
   return next.getTime();
 };
 
-export function dailyQuota(req: Request, res: Response, next: NextFunction) {
-  const id = req.sessionId;
-  if (!id) return next();
+export const dailyQuota = (req: Request, res: Response, next: NextFunction) => {
+  const key = hashKey(req.ip ?? 'unknown');
 
   const now = Date.now();
-  let bucket = store.get(id);
+  let bucket = store.get(key);
 
   if (!bucket || bucket.resetAt <= now) {
     const resetAt = nextMidnightUtcMs();
     bucket = { count: 0, resetAt };
-    store.set(id, bucket);
+    store.set(key, bucket);
   }
 
   bucket.count++;
@@ -44,4 +43,4 @@ export function dailyQuota(req: Request, res: Response, next: NextFunction) {
   }
 
   next();
-}
+};

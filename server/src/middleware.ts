@@ -1,25 +1,22 @@
-import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import { createExpiringStore, hashKey, type ExpiringEntry } from './utils.js';
+import type { NextFunction, Request, Response } from 'express';
+import { createExpiringStore, hashKey, type ExpiringStore } from './utils.js';
 
 // --- Rate Limiting ---
 
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 
-const rateLimitStore: Map<string, ExpiringEntry> =
+const rateLimitStore: ExpiringStore =
   createExpiringStore(RATE_LIMIT_WINDOW_MS);
 
-function rateLimitFor(
-  store: Map<string, ExpiringEntry>,
+const rateLimitFor = (
+  store: ExpiringStore,
   max: number,
   windowMs: number,
   message: string,
-) {
-  const requesterId = (req: Request) =>
-    `${req.ip ?? 'unknown'}:${req.sessionId ?? 'nosession'}`;
-
+) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const key = hashKey(requesterId(req));
+    const key = hashKey(req.ip ?? 'unknown');
     const now = Date.now();
     const entry = store.get(key);
 
@@ -50,12 +47,12 @@ function rateLimitFor(
 
     next();
   };
-}
+};
 
 const GLOBAL_RATE_LIMIT_MAX = 60;
 const GLOBAL_RATE_LIMIT_WINDOW_MS = 60_000;
 
-const globalStore: Map<string, ExpiringEntry> =
+const globalStore: ExpiringStore =
   createExpiringStore(GLOBAL_RATE_LIMIT_WINDOW_MS);
 
 export const globalRateLimit = rateLimitFor(
@@ -71,20 +68,3 @@ export const rateLimit = rateLimitFor(
   RATE_LIMIT_WINDOW_MS,
   'Too many requests on the review endpoint. Please try again later.',
 );
-
-// --- Anonymous Session ---
-
-const SESSION_COOKIE_NAME = 'codelens.sid';
-const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-
-export const anonymousSession: RequestHandler = async (req, _res, next) => {
-  if (!req.session?.id) {
-    await new Promise<void>((resolve, reject) => {
-      req.session!.regenerate((err) => (err ? reject(err) : resolve()));
-    });
-  }
-  req.sessionId = req.session.id;
-  next();
-};
-
-export { SESSION_COOKIE_NAME, SESSION_MAX_AGE_MS };

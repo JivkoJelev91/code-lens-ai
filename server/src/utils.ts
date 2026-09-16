@@ -8,7 +8,12 @@ export const hashKey = (input: string) =>
 export const isLocalhost = (origin: string) => {
   try {
     const hostname = new URL(origin).hostname;
-    return hostname === 'localhost' || hostname === '127.0.0.1';
+    return (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '[::1]' ||
+      hostname === '::1'
+    );
   } catch {
     return false;
   }
@@ -19,7 +24,19 @@ export interface ExpiringEntry {
   resetAt: number;
 }
 
-export function createExpiringStore(sweepIntervalMs: number) {
+export interface ExpiringStore {
+  get(key: string): ExpiringEntry | undefined;
+  set(key: string, entry: ExpiringEntry): void;
+  delete(key: string): boolean;
+  readonly size: number;
+}
+
+const DEFAULT_MAX_ENTRIES = 100_000;
+
+export const createExpiringStore = (
+  sweepIntervalMs: number,
+  maxEntries = DEFAULT_MAX_ENTRIES,
+): ExpiringStore => {
   const store = new Map<string, ExpiringEntry>();
   const timer = setInterval(() => {
     const now = Date.now();
@@ -28,8 +45,35 @@ export function createExpiringStore(sweepIntervalMs: number) {
     }
   }, sweepIntervalMs);
   timer.unref();
-  return store;
-}
+
+  const evictIfFull = () => {
+    if (store.size < maxEntries) return;
+    const now = Date.now();
+    for (const [key, entry] of store) {
+      if (entry.resetAt <= now) {
+        store.delete(key);
+        if (store.size < maxEntries) return;
+      }
+    }
+    while (store.size >= maxEntries) {
+      const oldest = store.keys().next().value;
+      if (oldest === undefined) break;
+      store.delete(oldest);
+    }
+  };
+
+  return {
+    get: (key) => store.get(key),
+    set: (key, entry) => {
+      evictIfFull();
+      store.set(key, entry);
+    },
+    delete: (key) => store.delete(key),
+    get size() {
+      return store.size;
+    },
+  };
+};
 
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (res.headersSent) return;
@@ -47,14 +91,9 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   }
 };
 
-export function logAndExit(message: string, error?: unknown, exitCode = 1): never {
+export const logAndExit = (message: string, error?: unknown, exitCode = 1): never => {
   logger.fatal({ err: error }, message);
   const detail = error instanceof Error ? `: ${error.message}` : '';
   process.stderr.write(`[FATAL] ${message}${detail}\n`);
   process.exit(exitCode);
-}
-
-export const timeout = (ms: number) =>
-  new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('TIMEOUT')), ms),
-  );
+};

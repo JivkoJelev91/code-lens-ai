@@ -14,7 +14,7 @@ export const logger = pino({
   }),
 });
 
-export function requestLogger(req: Request, res: Response, next: NextFunction) {
+export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const startedAt = Date.now();
   const reqId = randomUUID();
 
@@ -30,11 +30,10 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
         status: res.statusCode,
         durationMs,
         ip: req.ip,
-        sessionId: req.sessionId,
       },
       'request completed',
     );
   });
 
   next();
-}
+};
