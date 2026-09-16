@@ -35,5 +35,5 @@ pnpm dev
 
 
 ## Screenshot
-- <img width="1692" height="1263" alt="Screenshot 2026-09-14 163414" src="https://github.com/user-attachments/assets/bd199b40-48af-4900-9e1f-f16a5b25ba1d" />
+- <img width="1692" height="1263" alt="CodeLens AI screenshot" src="assets/screenshot.png" />
 

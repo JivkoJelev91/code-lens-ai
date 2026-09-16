@@ -10,7 +10,11 @@ import { reviewRequestSchema } from './schemas.js';
 import { logger, requestLogger } from './logger.js';
 import { errorHandler, isLocalhost, logAndExit } from './utils.js';
 
-const TIMEOUT = 30_000;
+const STARTUP_TIMEOUT_MS = 60_000;
+const REVIEW_TIMEOUT_MS = Number(process.env.REVIEW_TIMEOUT_MS ?? 120_000);
+if (!Number.isFinite(REVIEW_TIMEOUT_MS) || REVIEW_TIMEOUT_MS < 1_000 || REVIEW_TIMEOUT_MS > 600_000) {
+  logAndExit(`Invalid REVIEW_TIMEOUT_MS: ${process.env.REVIEW_TIMEOUT_MS}`);
+}
 
 const port = Number(process.env.PORT ?? 4001);
 if (!Number.isInteger(port) || port <= 0 || port > 65_535) {
@@ -61,7 +65,7 @@ const createApp = (client: OpencodeClient) => {
     }
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT);
+    const timer = setTimeout(() => controller.abort(), REVIEW_TIMEOUT_MS);
     try {
       const review = await reviewCode(client, parsed.data.code, controller.signal);
       res.json(review);
@@ -83,7 +87,7 @@ const createApp = (client: OpencodeClient) => {
 };
 
 const main = async () => {
-  const opencode = await createOpencodeServer({ timeout: TIMEOUT, port: 0 });
+  const opencode = await createOpencodeServer({ timeout: STARTUP_TIMEOUT_MS, port: 0 });
   const client = createOpencodeClient({ baseUrl: opencode.url });
   const app = createApp(client);
 
