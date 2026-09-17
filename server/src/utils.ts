@@ -7,13 +7,9 @@ export const hashKey = (input: string) =>
 
 export const isLocalhost = (origin: string) => {
   try {
-    const hostname = new URL(origin).hostname;
-    return (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '[::1]' ||
-      hostname === '::1'
-    );
+    const { hostname } = new URL(origin);
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+    return hostname === '[::1]' || hostname === '::1';
   } catch {
     return false;
   }

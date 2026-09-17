@@ -24,22 +24,31 @@ if (!Number.isInteger(port) || port <= 0 || port > 65_535) {
 const PORT = port;
 const HOST = process.env.HOST ?? '0.0.0.0';
 
-const defaultAllowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
-  : [];
+const defaultAllowedOrigins = new Set(
+  (process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
 
+const isProd = process.env.NODE_ENV === 'production';
+
+// Requests without an Origin header (curl, server-to-server) intentionally pass
+// through without CORS headers -- the browser enforces CORS, not this middleware.
+// Browser requests must match an allowed origin, or a localhost origin while in dev.
 const corsMiddleware = cors({
   origin(origin, callback) {
     if (!origin) return callback(null, false);
-    if (defaultAllowedOrigins.includes(origin)) return callback(null, true);
-    if (process.env.NODE_ENV !== 'production' && isLocalhost(origin)) {
-      return callback(null, true);
-    }
-    callback(Object.assign(new Error('Not allowed by CORS'), { status: 403 }));
+    if (defaultAllowedOrigins.has(origin)) return callback(null, true);
+    if (!isProd && isLocalhost(origin)) return callback(null, true);
+    const err = new Error('Not allowed by CORS') as Error & { status?: number };
+    err.status = 403;
+    callback(err);
   },
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 86_400,
 });
 
 const createApp = (client: OpencodeClient, cache: ReviewCache) => {
