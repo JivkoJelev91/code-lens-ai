@@ -1,23 +1,7 @@
+import type { Severity, Review } from '@code-lens-ai/shared';
+import IssueCard from '@/components/IssueCard';
 import styles from '@/components/ReviewView.module.scss';
 import { useTypewriter } from '@/hooks/useTypewriter';
-
-export type Severity = 'high' | 'medium' | 'low';
-
-export type Issue = {
-  severity: Severity;
-  category: string;
-  line: number | null;
-  message: string;
-  suggestion: string;
-};
-
-export type Review = {
-  language: string;
-  framework: string;
-  score: number;
-  summary: string;
-  issues: Issue[];
-};
 
 const SEVERITY_META: Record<Severity, { icon: string; label: string }> = {
   high: { icon: '▲', label: 'High' },
@@ -60,14 +44,16 @@ const ReviewView = ({ review }: { review: Review }) => {
   const { lines, issuesIndex } = buildReview(review);
   const { typedAt, activeLine, line, skip } = useTypewriter(lines);
 
-  const segment = (slot: { text: string; active: boolean }) => (
-    <>
-      {slot.text}
-      {slot.active && <span className={styles.reviewViewCursor} />}
-    </>
-  );
-  const seg = (index: number) =>
-    segment({ text: typedAt(index), active: index === activeLine });
+  const seg = (index: number) => {
+    const text = typedAt(index);
+    const active = index === activeLine;
+    return (
+      <>
+        {text}
+        {active && <span className={styles.reviewViewCursor} />}
+      </>
+    );
+  };
 
   return (
     <div className={styles.reviewView} onClick={skip}>
@@ -91,39 +77,16 @@ const ReviewView = ({ review }: { review: Review }) => {
             <h2 className={styles.reviewViewHeading}>{seg(5)}</h2>
             <ul className={styles.reviewViewIssues}>
               {review.issues
-                .map((issue, index) => ({
-                  issue,
-                  index,
-                  base: issuesIndex[index],
-                }))
+                .map((issue, index) => ({ issue, base: issuesIndex[index] }))
                 .filter(({ base }) => line >= base)
-                .map(({ issue, index, base }) => (
-                  <li
-                    key={index}
-                    className={`${styles.reviewViewIssue} ${styles[`reviewViewIssue${issue.severity[0].toUpperCase()}${issue.severity.slice(1)}`]}`}
-                  >
-                    <p className={styles.reviewViewIssueHead}>
-                      <span className={styles.reviewViewIssueSeverity}>
-                        {seg(base)}
-                      </span>
-                      <span className={styles.reviewViewIssueCategory}>
-                        {seg(base + 1)}
-                      </span>
-                      {typedAt(base + 2) && (
-                        <span className={styles.reviewViewIssueLine}>
-                          {seg(base + 2)}
-                        </span>
-                      )}
-                    </p>
-                    <p className={styles.reviewViewIssueMessage}>
-                      {seg(base + 3)}
-                    </p>
-                    {typedAt(base + 4) && (
-                      <p className={styles.reviewViewIssueSuggestion}>
-                        {seg(base + 4)}
-                      </p>
-                    )}
-                  </li>
+                .map(({ issue, base }) => (
+                  <IssueCard
+                    key={base}
+                    severity={issue.severity}
+                    base={base}
+                    slot={seg}
+                    typedAt={typedAt}
+                  />
                 ))}
             </ul>
           </>

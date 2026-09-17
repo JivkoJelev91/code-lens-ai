@@ -3,8 +3,7 @@
 .home {
   position: relative;
   @include grid-center;
-  min-height: 100vh;
-  min-height: 100svh;
+  @include viewport-height(min-height, 100);
   padding: 20px;
 
   &__window {
@@ -13,8 +12,7 @@
     grid-template-rows: auto 1fr auto;
     width: 100%;
     max-width: 1400px;
-    height: 82vh;
-    height: 82svh;
+    @include viewport-height(height, 82);
     min-height: 480px;
     border: 1px solid;
     background: var(--matrix-window-bg);
@@ -45,7 +43,7 @@
     cursor: pointer;
 
     &:hover {
-      box-shadow: 0 0 14px var(--matrix-green-glow);
+      @include glow;
     }
   }
 
@@ -124,8 +122,8 @@
     width: 8px;
     height: 12px;
     background: var(--matrix-green);
-    box-shadow: 0 0 6px var(--matrix-green);
-    animation: home-typing-blink 0.7s steps(1) infinite;
+    @include glow(var(--matrix-green), 6px);
+    animation: blink 0.7s steps(1) infinite;
   }
 
   &__submit {
@@ -143,7 +141,7 @@
     cursor: pointer;
 
     &:hover {
-      box-shadow: 0 0 14px var(--matrix-green-glow);
+      @include glow;
     }
 
     &:disabled {
@@ -165,8 +163,8 @@
       height: 6px;
       border-radius: 50%;
       background: var(--matrix-green);
-      box-shadow: 0 0 6px var(--matrix-green);
-      animation: home-blink 1.2s infinite;
+      @include glow(var(--matrix-green), 6px);
+      animation: pulse 1.2s infinite;
 
       &:nth-child(2) {
         animation-delay: 0.2s;
@@ -196,13 +194,12 @@
     }
 
     &__placeholder {
-      min-height: 28vh;
-      min-height: 28svh;
+      @include viewport-height(min-height, 28);
     }
   }
 }
 
-@keyframes home-blink {
+@keyframes pulse {
   0%,
   80%,
   100% {
@@ -211,11 +208,5 @@
 
   40% {
     opacity: 1;
-  }
-}
-
-@keyframes home-typing-blink {
-  50% {
-    opacity: 0;
   }
 }

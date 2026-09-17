@@ -1,0 +1,67 @@
+@use '../styles/mixins' as *;
+
+.issueCard {
+  @include flex-column($gap: 6px);
+  padding: 10px;
+  border: 1px solid var(--matrix-green-muted);
+  background: var(--matrix-green-faint);
+  animation: issue-in 0.35s ease-out;
+
+  &--high {
+    border-color: rgba(var(--severity-high) / 0.5);
+    background: rgba(var(--severity-high) / 0.05);
+  }
+
+  &--medium {
+    border-color: rgba(var(--severity-medium) / 0.5);
+    background: rgba(var(--severity-medium) / 0.05);
+  }
+
+  &__head {
+    @include flex-center($gap: 8px);
+    margin: 0;
+    font-size: 11px;
+    flex-wrap: wrap;
+  }
+
+  &__severity {
+    font-weight: 700;
+  }
+
+  &__category {
+    opacity: 0.8;
+  }
+
+  &__line {
+    margin-left: auto;
+    opacity: 0.6;
+  }
+
+  &__message {
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  &__suggestion {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--matrix-green);
+    opacity: 0.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+@keyframes issue-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

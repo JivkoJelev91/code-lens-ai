@@ -40,5 +40,5 @@ export const useTypewriter = (lines: string[]) => {
     setChar(0);
   };
 
-  return { typedAt, activeLine: done ? -1 : line, line, done, skip };
+  return { typedAt, activeLine: done ? -1 : line, line, skip };
 }

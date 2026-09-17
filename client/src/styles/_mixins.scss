@@ -24,3 +24,12 @@
   display: grid;
   place-items: center;
 }
+
+@mixin viewport-height($property, $size) {
+  #{$property}: #{$size}vh;
+  #{$property}: #{$size}svh;
+}
+
+@mixin glow($color: var(--matrix-green-glow), $size: 14px) {
+  box-shadow: 0 0 $size $color;
+}

@@ -39,7 +39,7 @@ const defineTheme = (monaco: Monaco) => {
 };
 
 const CodeEditor = ({ value, onChange, language }: CodeEditorProps) => {
-  const lang = language  ?language.toLowerCase() : 'javascript';
+  const lang = language?.toLowerCase() ?? 'javascript';
 
   return (
     <Editor

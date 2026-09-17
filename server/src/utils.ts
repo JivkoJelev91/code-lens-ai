@@ -1,55 +1,51 @@
 import { createHash } from 'node:crypto';
-import type { ErrorRequestHandler } from 'express';
+import type { ErrorRequestHandler, Request } from 'express';
 import { logger } from './logger.js';
 
 export const hashKey = (input: string) =>
   createHash('sha256').update(input).digest('hex');
 
+export const ipKey = (req: Request) => hashKey(req.ip ?? 'unknown');
+
 export const isLocalhost = (origin: string) => {
   try {
     const { hostname } = new URL(origin);
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
-    return hostname === '[::1]' || hostname === '::1';
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
   } catch {
     return false;
   }
 };
 
-export interface ExpiringEntry {
-  count: number;
-  resetAt: number;
-}
+const DEFAULT_MAX_ENTRIES = 100_000;
 
-export interface ExpiringStore {
-  get(key: string): ExpiringEntry | undefined;
-  set(key: string, entry: ExpiringEntry): void;
+export interface TtlCache<T> {
+  get(key: string): T | undefined;
+  set(key: string, value: T, expiresAt?: number): void;
   delete(key: string): boolean;
   readonly size: number;
   dispose(): void;
 }
 
-const DEFAULT_MAX_ENTRIES = 100_000;
-
-export const createExpiringStore = (
-  sweepIntervalMs: number,
+export const createTtlCache = <T>(
+  ttlMs: number,
   maxEntries = DEFAULT_MAX_ENTRIES,
-): ExpiringStore => {
-  const store = new Map<string, ExpiringEntry>();
+): TtlCache<T> => {
+  const store = new Map<string, { value: T; expiresAt: number }>();
+  let disposed = false;
+
   const timer = setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of store) {
-      if (entry.resetAt <= now) store.delete(key);
+      if (entry.expiresAt <= now) store.delete(key);
     }
-  }, sweepIntervalMs);
+  }, ttlMs);
   timer.unref();
-
-  let disposed = false;
 
   const evictIfFull = () => {
     if (store.size < maxEntries) return;
     const now = Date.now();
     for (const [key, entry] of store) {
-      if (entry.resetAt <= now) {
+      if (entry.expiresAt <= now) {
         store.delete(key);
         if (store.size < maxEntries) return;
       }
@@ -65,21 +61,19 @@ export const createExpiringStore = (
     get: (key) => {
       if (disposed) return undefined;
       const entry = store.get(key);
-      if (entry && entry.resetAt <= Date.now()) {
+      if (!entry) return undefined;
+      if (entry.expiresAt <= Date.now()) {
         store.delete(key);
         return undefined;
       }
-      return entry;
+      return entry.value;
     },
-    set: (key, entry) => {
+    set: (key, value, expiresAt = Date.now() + ttlMs) => {
       if (disposed) return;
-      evictIfFull();
-      store.set(key, entry);
+      if (!store.has(key)) evictIfFull();
+      store.set(key, { value, expiresAt });
     },
-    delete: (key) => {
-      if (disposed) return false;
-      return store.delete(key);
-    },
+    delete: (key) => (disposed ? false : store.delete(key)),
     get size() {
       return store.size;
     },

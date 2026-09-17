@@ -31,5 +31,6 @@ export const reviewSchema = z.object({
 });
 
 export type ReviewRequest = z.infer<typeof reviewRequestSchema>;
+export type Severity = z.infer<typeof issueSchema>['severity'];
 export type Issue = z.infer<typeof issueSchema>;
 export type Review = z.infer<typeof reviewSchema>;

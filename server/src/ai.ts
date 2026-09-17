@@ -1,10 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import type { OpencodeClient } from '@opencode-ai/sdk';
-import { reviewSchema, type Review } from './schemas.js';
-import type { ReviewCache } from './review-cache.js';
+import { reviewSchema, type Review } from '@code-lens-ai/shared';
+import type { TtlCache } from './utils.js';
 import { logger } from './logger.js';
-
-export type { Review, Issue } from './schemas.js';
 
 export interface ReviewResult {
   review: Review;
@@ -40,17 +38,22 @@ Code:
 ${code}
 \`\`\``;
 
+export interface ReviewCodeOptions {
+  code: string;
+  cache: TtlCache<Review>;
+  signal?: AbortSignal;
+}
+
 export const reviewCode = async (
   client: OpencodeClient,
-  code: string,
-  cache: ReviewCache,
-  signal?: AbortSignal,
+  { code, cache, signal }: ReviewCodeOptions,
 ): Promise<ReviewResult> => {
   const cached = cache.get(code);
   if (cached) {
-    logger.info('Review cache hit');
+    logger.info({ cache: 'hit' }, 'Review served from cache');
     return { review: cached, cached: true };
   }
+  logger.info({ cache: 'miss' }, 'Review not cached');
 
   const skillContent = await getSkill();
   const prompt = buildPrompt(skillContent, code);

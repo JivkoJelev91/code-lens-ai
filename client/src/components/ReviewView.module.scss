@@ -39,8 +39,8 @@
     margin-left: 2px;
     vertical-align: -0.1em;
     background: var(--matrix-green);
-    box-shadow: 0 0 6px var(--matrix-green);
-    animation: cursor-blink 0.7s steps(1) infinite;
+    @include glow(var(--matrix-green), 6px);
+    animation: blink 0.7s steps(1) infinite;
   }
 
   &__section {
@@ -74,82 +74,8 @@
     list-style: none;
   }
 
-  &__issue {
-    @include flex-column($gap: 6px);
-    padding: 10px;
-    border: 1px solid var(--matrix-green-muted);
-    background: var(--matrix-green-faint);
-    animation: issue-in 0.35s ease-out;
-
-    &--high {
-      border-color: rgba(255, 69, 58, 0.5);
-      background: rgba(255, 69, 58, 0.05);
-    }
-
-    &--medium {
-      border-color: rgba(255, 195, 66, 0.5);
-      background: rgba(255, 195, 66, 0.05);
-    }
-  }
-
-  &__issue-head {
-    @include flex-center($gap: 8px);
-    margin: 0;
-    font-size: 11px;
-    flex-wrap: wrap;
-  }
-
-  &__issue-severity {
-    font-weight: 700;
-  }
-
-  &__issue-category {
-    opacity: 0.8;
-  }
-
-  &__issue-line {
-    margin-left: auto;
-    opacity: 0.6;
-  }
-
-  &__issue-message {
-    margin: 0;
-    line-height: 1.4;
-    word-break: break-word;
-  }
-
-  &__issue-suggestion {
-    margin: 0;
-    font-size: 12px;
-    line-height: 1.4;
-    color: var(--matrix-green);
-    opacity: 0.8;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-
   @media (max-width: 700px) {
-    min-height: 28vh;
-    min-height: 28svh;
-    max-height: 56vh;
-    max-height: 56svh;
-  }
-}
-
-@keyframes cursor-blink {
-  50% {
-    opacity: 0;
-  }
-}
-
-@keyframes issue-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    @include viewport-height(min-height, 28);
+    @include viewport-height(max-height, 56);
   }
 }

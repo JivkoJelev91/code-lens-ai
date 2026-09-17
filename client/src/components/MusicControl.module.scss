@@ -21,7 +21,7 @@
     }
 
     &:hover {
-      box-shadow: 0 0 14px var(--matrix-green-glow);
+      @include glow;
     }
   }
 

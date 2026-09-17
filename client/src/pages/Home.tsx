@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import type { Review } from '@code-lens-ai/shared';
 import CodeEditor from '@/components/CodeEditor';
 import MatrixRain from '@/components/MatrixRain';
-import ReviewView, { type Review } from '@/components/ReviewView';
+import ReviewView from '@/components/ReviewView';
 import { debounce, getLocalStorage, setLocalStorage } from '@/utils';
 import styles from '@/pages/Home.module.scss';
 
