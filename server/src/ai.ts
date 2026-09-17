@@ -1,9 +1,15 @@
 import { readFile } from 'node:fs/promises';
 import type { OpencodeClient } from '@opencode-ai/sdk';
 import { reviewSchema, type Review } from './schemas.js';
+import type { ReviewCache } from './review-cache.js';
 import { logger } from './logger.js';
 
 export type { Review, Issue } from './schemas.js';
+
+export interface ReviewResult {
+  review: Review;
+  cached: boolean;
+}
 
 const SKILL_PATH = new URL('../../.opencode/skills/code-review/SKILL.md', import.meta.url);
 
@@ -37,8 +43,15 @@ ${code}
 export const reviewCode = async (
   client: OpencodeClient,
   code: string,
+  cache: ReviewCache,
   signal?: AbortSignal,
-): Promise<Review> => {
+): Promise<ReviewResult> => {
+  const cached = cache.get(code);
+  if (cached) {
+    logger.info('Review cache hit');
+    return { review: cached, cached: true };
+  }
+
   const skillContent = await getSkill();
   const prompt = buildPrompt(skillContent, code);
 
@@ -73,7 +86,8 @@ export const reviewCode = async (
       logger.error({ err: result.error }, 'AI response validation failed');
       throw new Error('AI response is missing required fields.');
     }
-    return result.data;
+    cache.set(code, result.data);
+    return { review: result.data, cached: false };
   } finally {
     if (signal?.aborted) {
       await client.session.abort({ path: { id: sessionId } }).catch(() => {});

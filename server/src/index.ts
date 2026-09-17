@@ -6,6 +6,7 @@ import { createOpencodeClient, createOpencodeServer } from '@opencode-ai/sdk';
 import { reviewCode } from './ai.js';
 import { rateLimit, globalRateLimit } from './middleware.js';
 import { dailyQuota } from './daily-quota.js';
+import { ReviewCache } from './review-cache.js';
 import { reviewRequestSchema } from './schemas.js';
 import { logger, requestLogger } from './logger.js';
 import { errorHandler, isLocalhost, logAndExit } from './utils.js';
@@ -41,7 +42,7 @@ const corsMiddleware = cors({
   allowedHeaders: ['Content-Type'],
 });
 
-const createApp = (client: OpencodeClient) => {
+const createApp = (client: OpencodeClient, cache: ReviewCache) => {
   const app = express();
 
   app.set('trust proxy', 1);
@@ -67,7 +68,8 @@ const createApp = (client: OpencodeClient) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REVIEW_TIMEOUT_MS);
     try {
-      const review = await reviewCode(client, parsed.data.code, controller.signal);
+      const { review, cached } = await reviewCode(client, parsed.data.code, cache, controller.signal);
+      res.setHeader('X-Cache', cached ? 'HIT' : 'MISS');
       res.json(review);
     } catch (error) {
       const isTimeout = controller.signal.aborted;
@@ -89,7 +91,8 @@ const createApp = (client: OpencodeClient) => {
 const main = async () => {
   const opencode = await createOpencodeServer({ timeout: STARTUP_TIMEOUT_MS, port: 0 });
   const client = createOpencodeClient({ baseUrl: opencode.url });
-  const app = createApp(client);
+  const cache = new ReviewCache();
+  const app = createApp(client, cache);
 
   app.listen(PORT, HOST, () => {
     logger.info({ host: HOST, port: PORT }, 'Server listening');
@@ -97,6 +100,7 @@ const main = async () => {
 
   const shutdown = () => {
     logger.info('Shutting down server');
+    cache.dispose();
     opencode.close();
     process.exit(0);
   };
