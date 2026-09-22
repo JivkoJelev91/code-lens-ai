@@ -4,18 +4,12 @@ import cors from 'cors';
 import type { OpencodeClient } from '@opencode-ai/sdk';
 import { createOpencodeClient, createOpencodeServer } from '@opencode-ai/sdk';
 import type { Review } from '@code-lens-ai/shared';
-import { reviewRequestSchema } from '@code-lens-ai/shared';
-import { reviewCode } from './ai.js';
-import { rateLimit, globalRateLimit } from './middleware.js';
-import { dailyQuota } from './daily-quota.js';
+import { globalRateLimit } from './middleware.js';
 import { logger, requestLogger } from './logger.js';
 import { createTtlCache, errorHandler, isLocalhost, logAndExit, type TtlCache } from './utils.js';
+import { reviewRouter } from './routes/review.js';
 
 const STARTUP_TIMEOUT_MS = 60_000;
-const REVIEW_TIMEOUT_MS = Number(process.env.REVIEW_TIMEOUT_MS ?? 120_000);
-if (!Number.isFinite(REVIEW_TIMEOUT_MS) || REVIEW_TIMEOUT_MS < 1_000 || REVIEW_TIMEOUT_MS > 600_000) {
-  logAndExit(`Invalid REVIEW_TIMEOUT_MS: ${process.env.REVIEW_TIMEOUT_MS}`);
-}
 
 const REVIEW_CACHE_TTL_MS = 60 * 60 * 1_000;
 const REVIEW_CACHE_MAX_ENTRIES = 1_000;
@@ -67,37 +61,7 @@ const createApp = (client: OpencodeClient, cache: TtlCache<Review>) => {
     res.json({ message: 'CodeLens AI server is running.' });
   });
 
-  app.post('/api/review', rateLimit, dailyQuota, async (req, res) => {
-    const parsed = reviewRequestSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res
-        .status(400)
-        .json({ error: parsed.error.issues[0]?.message ?? 'Invalid request.' });
-      return;
-    }
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), REVIEW_TIMEOUT_MS);
-    try {
-      const { review, cached } = await reviewCode(client, {
-        code: parsed.data.code,
-        cache,
-        signal: controller.signal,
-      });
-      res.setHeader('X-Cache', cached ? 'HIT' : 'MISS');
-      res.json(review);
-    } catch (error) {
-      const isTimeout = controller.signal.aborted;
-      logger.error({ err: error }, 'Review request failed');
-      res.status(isTimeout ? 504 : 500).json({
-        error: isTimeout
-          ? 'Review timed out. Please try again.'
-          : 'Review failed, try again!',
-      });
-    } finally {
-      clearTimeout(timer);
-    }
-  });
+  app.use('/api', reviewRouter(client, cache));
 
   app.use(errorHandler);
   return app;
