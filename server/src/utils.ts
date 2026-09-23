@@ -86,6 +86,23 @@ export const createTtlCache = <T>(
   };
 };
 
+export interface ResultCache<T> {
+  get(key: string): Promise<T | undefined>;
+  set(key: string, value: T, expiresAt?: number): Promise<void>;
+  dispose(): Promise<void>;
+}
+
+export const createAsyncTtlCache = <T>(ttlMs: number, maxEntries: number): ResultCache<T> => {
+  const cache = createTtlCache<T>(ttlMs, maxEntries);
+  return {
+    get: async (key) => cache.get(key),
+    set: async (key, value, expiresAt) => {
+      cache.set(key, value, expiresAt);
+    },
+    dispose: async () => cache.dispose(),
+  };
+};
+
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (res.headersSent) return;
   const { status, type } = error as { status?: number; type?: string };

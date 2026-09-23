@@ -5,7 +5,8 @@ import { createOpencodeClient, createOpencodeServer } from '@opencode-ai/sdk';
 import type { Review } from '@code-lens-ai/shared';
 import { globalRateLimit } from './middleware.js';
 import { logger, requestLogger } from './logger.js';
-import { createTtlCache, errorHandler, isLocalhost, logAndExit, type TtlCache } from './utils.js';
+import { createAsyncTtlCache, errorHandler, isLocalhost, logAndExit, type ResultCache } from './utils.js';
+import { createRedisCache } from './redis-cache.js';
 import { reviewRouter } from './routes/review.js';
 import { OpencodeAIProvider } from './providers/opencode.js';
 import type { AIProvider } from './providers/types.js';
@@ -17,6 +18,8 @@ import type { Semaphore } from './semaphore.js';
 const STARTUP_TIMEOUT_MS = 60_000;
 const REVIEW_CACHE_TTL_MS = 60 * 60 * 1_000;
 const REVIEW_CACHE_MAX_ENTRIES = 1_000;
+
+const REDIS_URL = process.env.REDIS_URL ?? '';
 
 const AI_MAX_CONCURRENCY = Number(process.env.AI_MAX_CONCURRENCY ?? 4);
 if (!Number.isInteger(AI_MAX_CONCURRENCY) || AI_MAX_CONCURRENCY < 1) {
@@ -64,7 +67,7 @@ const corsMiddleware = cors({
 
 const createApp = (
   provider: AIProvider,
-  cache: TtlCache<Review>,
+  cache: ResultCache<Review>,
   budget: CostTracker,
   semaphore: Semaphore,
 ) => {
@@ -88,7 +91,9 @@ const main = async () => {
   const opencode = await createOpencodeServer({ timeout: STARTUP_TIMEOUT_MS, port: 0 });
   const client = createOpencodeClient({ baseUrl: opencode.url });
   const provider = new OpencodeAIProvider(client);
-  const cache: TtlCache<Review> = createTtlCache<Review>(REVIEW_CACHE_TTL_MS, REVIEW_CACHE_MAX_ENTRIES);
+  const cache: ResultCache<Review> = REDIS_URL
+    ? createRedisCache<Review>(REDIS_URL, REVIEW_CACHE_TTL_MS)
+    : createAsyncTtlCache<Review>(REVIEW_CACHE_TTL_MS, REVIEW_CACHE_MAX_ENTRIES);
   const budget: CostTracker = createCostTracker(AI_BUDGET_WINDOW_MS, AI_BUDGET_MAX_TOKENS);
   const semaphore: Semaphore = createSemaphore(AI_MAX_CONCURRENCY);
   const app = createApp(provider, cache, budget, semaphore);
@@ -97,9 +102,13 @@ const main = async () => {
     logger.info({ host: HOST, port: PORT }, 'Server listening');
   });
 
-  const shutdown = () => {
+  const shutdown = async () => {
     logger.info('Shutting down server');
-    cache.dispose();
+    try {
+      await cache.dispose();
+    } catch (err) {
+      logger.warn({ err }, 'Cache dispose failed');
+    }
     opencode.close();
     process.exit(0);
   };

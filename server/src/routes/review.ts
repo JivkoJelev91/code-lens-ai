@@ -1,7 +1,7 @@
 import { reviewRequestSchema, type Review } from "@code-lens-ai/shared";
 import { dailyQuota } from "../daily-quota.js";
 import { rateLimit } from "../middleware.js";
-import { logAndExit, type TtlCache } from "../utils.js";
+import { logAndExit, type ResultCache } from "../utils.js";
 import { reviewCode } from "../ai.js";
 import { logger } from "../logger.js";
 import { AppError } from "../errors.js";
@@ -21,7 +21,7 @@ if (
 }
 export const reviewRouter = (
   provider: AIProvider,
-  cache: TtlCache<Review>,
+  cache: ResultCache<Review>,
   budget: CostTracker,
   semaphore: Semaphore,
 ) => {

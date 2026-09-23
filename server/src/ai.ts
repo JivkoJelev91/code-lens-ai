@@ -1,5 +1,5 @@
 import { reviewSchema, reviewJsonShape, type Review, type ReviewRequest } from '@code-lens-ai/shared';
-import { hashKey, type TtlCache } from './utils.js';
+import { hashKey, type ResultCache } from './utils.js';
 import { logger } from './logger.js';
 import type { AIProvider } from './providers/types.js';
 import { AIBudgetExceededError, AIOutputError } from './errors.js';
@@ -21,7 +21,7 @@ const OUTPUT_TOKEN_RESERVE = 1_500;
 
 export interface ReviewCodeOptions {
   request: ReviewRequest;
-  cache: TtlCache<Review>;
+  cache: ResultCache<Review>;
   budget: CostTracker;
   semaphore: Semaphore;
   signal?: AbortSignal;
@@ -56,7 +56,7 @@ export const reviewCode = async (
   { request, cache, budget, semaphore, signal }: ReviewCodeOptions,
 ): Promise<ReviewResult> => {
   const cacheKey = hashKey(`${request.code}::${reviewJsonShape}`);
-  const cached = cache.get(cacheKey);
+  const cached = await cache.get(cacheKey);
   if (cached) {
     logger.info({ cache: 'hit' }, 'Review served from cache');
     return { review: cached, cached: true };
@@ -113,6 +113,6 @@ export const reviewCode = async (
     logger.error({ feedback }, 'AI output could not be repaired');
     throw new AIOutputError();
   }
-  cache.set(cacheKey, review);
+  await cache.set(cacheKey, review);
   return { review, cached: false };
 };
