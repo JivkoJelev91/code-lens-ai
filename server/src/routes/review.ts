@@ -3,7 +3,7 @@ import { dailyQuota } from "../daily-quota.js";
 import { rateLimit } from "../middleware.js";
 import { logAndExit, type ResultCache } from "../utils.js";
 import { reviewCode } from "../ai.js";
-import { logger } from "../logger.js";
+import { getRequestLogger } from "../logger.js";
 import { AppError } from "../errors.js";
 import type { AIProvider } from "../providers/types.js";
 import type { CostTracker } from "../cost.js";
@@ -32,11 +32,13 @@ export const reviewRouter = (
     rateLimit,
     dailyQuota,
     async (req: Request, res: Response) => {
+      const requestId = res.getHeader("X-Request-Id") as string | undefined;
       const parsed = reviewRequestSchema.safeParse(req.body);
       if (!parsed.success) {
         res.status(400).json({
           error: parsed.error.issues[0]?.message ?? "Invalid request.",
           issues: parsed.error.issues.map((issue) => issue.message),
+          requestId,
         });
         return;
       }
@@ -54,13 +56,14 @@ export const reviewRouter = (
         res.setHeader("X-Cache", cached ? "HIT" : "MISS");
         res.json(review);
       } catch (error) {
+        const log = getRequestLogger();
         if (error instanceof AppError) {
-          logger.warn({ code: error.code, retriable: error.retriable }, "Review request rejected");
-          res.status(error.status).json({ error: error.message });
+          log.warn({ code: error.code, retriable: error.retriable }, "Review request rejected");
+          res.status(error.status).json({ error: error.message, requestId });
           return;
         }
-        logger.error({ err: error }, "Review request failed");
-        res.status(500).json({ error: "Review failed, try again!" });
+        log.error({ err: error }, "Review request failed");
+        res.status(500).json({ error: "Review failed, try again!", requestId });
       } finally {
         clearTimeout(timer);
       }

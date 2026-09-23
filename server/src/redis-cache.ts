@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { logger } from './logger.js';
+import { getRequestLogger } from './logger.js';
 import type { ResultCache } from './utils.js';
 
 export const createRedisCache = <T>(url: string, ttlMs: number): ResultCache<T> => {
@@ -11,7 +11,7 @@ export const createRedisCache = <T>(url: string, ttlMs: number): ResultCache<T> 
     retryStrategy: (times) => Math.min(times * 50, 2_000),
   });
   client.on('error', (err) => {
-    logger.warn({ err }, 'Redis cache client error');
+    getRequestLogger().warn({ err }, 'Redis cache client error');
   });
 
   return {
@@ -21,7 +21,7 @@ export const createRedisCache = <T>(url: string, ttlMs: number): ResultCache<T> 
         if (raw == null) return undefined;
         return JSON.parse(raw) as T;
       } catch (err) {
-        logger.warn({ err }, 'Redis cache get failed');
+        getRequestLogger().warn({ err }, 'Redis cache get failed');
         return undefined;
       }
     },
@@ -29,7 +29,7 @@ export const createRedisCache = <T>(url: string, ttlMs: number): ResultCache<T> 
       try {
         await client.set(key, JSON.stringify(value), 'PX', Math.max(1, expiresAt - Date.now()));
       } catch (err) {
-        logger.warn({ err }, 'Redis cache set failed');
+        getRequestLogger().warn({ err }, 'Redis cache set failed');
       }
     },
     async dispose() {

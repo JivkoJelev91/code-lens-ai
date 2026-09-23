@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { ErrorRequestHandler, Request } from 'express';
-import { logger } from './logger.js';
+import { getRequestLogger, logger } from './logger.js';
 
 export const hashKey = (input: string) =>
   createHash('sha256').update(input).digest('hex');
@@ -106,16 +106,17 @@ export const createAsyncTtlCache = <T>(ttlMs: number, maxEntries: number): Resul
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (res.headersSent) return;
   const { status, type } = error as { status?: number; type?: string };
+  const requestId = res.getHeader('X-Request-Id') as string | undefined;
 
   if (type === 'entity.parse.failed') {
-    res.status(400).json({ error: 'Invalid JSON in request body.' });
+    res.status(400).json({ error: 'Invalid JSON in request body.', requestId });
   } else if (status === 413) {
-    res.status(413).json({ error: 'Request body too large.' });
+    res.status(413).json({ error: 'Request body too large.', requestId });
   } else if (status !== undefined && status >= 400 && status < 500) {
-    res.status(status).json({ error: 'Request could not be processed.' });
+    res.status(status).json({ error: 'Request could not be processed.', requestId });
   } else {
-    logger.error({ err: error }, 'Unhandled error');
-    res.status(500).json({ error: 'Internal server error.' });
+    getRequestLogger().error({ err: error }, 'Unhandled error');
+    res.status(500).json({ error: 'Internal server error.', requestId });
   }
 };
 

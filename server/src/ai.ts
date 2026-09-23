@@ -1,6 +1,6 @@
 import { reviewSchema, reviewJsonShape, type Review, type ReviewRequest } from '@code-lens-ai/shared';
 import { hashKey, type ResultCache } from './utils.js';
-import { logger } from './logger.js';
+import { getRequestLogger } from './logger.js';
 import type { AIProvider } from './providers/types.js';
 import { AIBudgetExceededError, AIOutputError } from './errors.js';
 import { retriable } from './retry.js';
@@ -31,6 +31,7 @@ const estimateInputTokens = (prompt: string) =>
   Math.ceil(prompt.length / 4) + OUTPUT_TOKEN_RESERVE;
 
 const parseReviewText = (text: string): { review: Review } | { feedback: string } => {
+  const log = getRequestLogger();
   let parsed: unknown;
   try {
     parsed = JSON.parse(
@@ -45,7 +46,7 @@ const parseReviewText = (text: string): { review: Review } | { feedback: string 
       .slice(0, 5)
       .map((issue) => `${issue.path.join('.') || 'root'}: ${issue.message}`)
       .join('; ');
-    logger.error({ err: result.error }, 'AI response validation failed');
+    log.error({ err: result.error }, 'AI response validation failed');
     return { feedback: detail };
   }
   return { review: result.data };
@@ -56,12 +57,13 @@ export const reviewCode = async (
   { request, cache, budget, semaphore, signal }: ReviewCodeOptions,
 ): Promise<ReviewResult> => {
   const cacheKey = hashKey(`${request.code}::${reviewJsonShape}`);
+  const log = getRequestLogger();
   const cached = await cache.get(cacheKey);
   if (cached) {
-    logger.info({ cache: 'hit' }, 'Review served from cache');
+    log.info({ cache: 'hit' }, 'Review served from cache');
     return { review: cached, cached: true };
   }
-  logger.info({ cache: 'miss' }, 'Review not cached');
+  log.info({ cache: 'miss' }, 'Review not cached');
 
   const skillContent = await getSkill();
 
@@ -80,7 +82,7 @@ export const reviewCode = async (
             budget.refund(estimate);
             if (usage) {
               budget.record(usage.inputTokens, usage.outputTokens);
-              logger.info({ usage, remaining: budget.remaining() }, 'AI token usage recorded');
+              log.info({ usage, remaining: budget.remaining() }, 'AI token usage recorded');
             }
             return raw;
           } catch (error) {
@@ -97,7 +99,7 @@ export const reviewCode = async (
         maxDelayMs: RETRY_MAX_DELAY_MS,
         signal,
         onRetry: (_error, retryCount) =>
-          logger.warn({ retryCount }, 'AI provider call failed, retrying'),
+          log.warn({ retryCount }, 'AI provider call failed, retrying'),
       },
     );
     const parsed = parseReviewText(text);
@@ -106,11 +108,11 @@ export const reviewCode = async (
       break;
     }
     feedback = parsed.feedback;
-    logger.warn({ attempt }, 'AI response invalid, re-prompting to repair');
+    log.warn({ attempt }, 'AI response invalid, re-prompting to repair');
   }
 
   if (!review) {
-    logger.error({ feedback }, 'AI output could not be repaired');
+    log.error({ feedback }, 'AI output could not be repaired');
     throw new AIOutputError();
   }
   await cache.set(cacheKey, review);
