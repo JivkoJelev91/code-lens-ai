@@ -29,11 +29,10 @@ export const reviewRouter = (
     async (req: Request, res: Response) => {
       const parsed = reviewRequestSchema.safeParse(req.body);
       if (!parsed.success) {
-        res
-          .status(400)
-          .json({
-            error: parsed.error.issues[0]?.message ?? "Invalid request.",
-          });
+        res.status(400).json({
+          error: parsed.error.issues[0]?.message ?? "Invalid request.",
+          issues: parsed.error.issues.map((issue) => issue.message),
+        });
         return;
       }
 
@@ -41,7 +40,7 @@ export const reviewRouter = (
       const timer = setTimeout(() => controller.abort(), REVIEW_TIMEOUT_MS);
       try {
         const { review, cached } = await reviewCode(client, {
-          code: parsed.data.code,
+          request: parsed.data,
           cache,
           signal: controller.signal,
         });

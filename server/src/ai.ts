@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { OpencodeClient } from '@opencode-ai/sdk';
-import { reviewSchema, type Review } from '@code-lens-ai/shared';
+import { reviewSchema, type Review, type ReviewRequest } from '@code-lens-ai/shared';
 import type { TtlCache } from './utils.js';
 import { logger } from './logger.js';
 
@@ -39,16 +39,16 @@ ${code}
 \`\`\``;
 
 export interface ReviewCodeOptions {
-  code: string;
+  request: ReviewRequest;
   cache: TtlCache<Review>;
   signal?: AbortSignal;
 }
 
 export const reviewCode = async (
   client: OpencodeClient,
-  { code, cache, signal }: ReviewCodeOptions,
+  { request, cache, signal }: ReviewCodeOptions,
 ): Promise<ReviewResult> => {
-  const cached = cache.get(code);
+  const cached = cache.get(request.code);
   if (cached) {
     logger.info({ cache: 'hit' }, 'Review served from cache');
     return { review: cached, cached: true };
@@ -56,7 +56,7 @@ export const reviewCode = async (
   logger.info({ cache: 'miss' }, 'Review not cached');
 
   const skillContent = await getSkill();
-  const prompt = buildPrompt(skillContent, code);
+  const prompt = buildPrompt(skillContent, request.code);
 
   const created = await client.session.create();
   if (!created.data) throw new Error('Failed to create session.');
@@ -89,7 +89,7 @@ export const reviewCode = async (
       logger.error({ err: result.error }, 'AI response validation failed');
       throw new Error('AI response is missing required fields.');
     }
-    cache.set(code, result.data);
+    cache.set(request.code, result.data);
     return { review: result.data, cached: false };
   } finally {
     if (signal?.aborted) {

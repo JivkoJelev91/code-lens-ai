@@ -10,7 +10,6 @@ import { createTtlCache, errorHandler, isLocalhost, logAndExit, type TtlCache } 
 import { reviewRouter } from './routes/review.js';
 
 const STARTUP_TIMEOUT_MS = 60_000;
-
 const REVIEW_CACHE_TTL_MS = 60 * 60 * 1_000;
 const REVIEW_CACHE_MAX_ENTRIES = 1_000;
 
@@ -56,13 +55,10 @@ const createApp = (client: OpencodeClient, cache: TtlCache<Review>) => {
   app.use(corsMiddleware);
   app.use(requestLogger);
   app.use(globalRateLimit);
-
   app.get('/', (_req, res) => {
     res.json({ message: 'CodeLens AI server is running.' });
   });
-
   app.use('/api', reviewRouter(client, cache));
-
   app.use(errorHandler);
   return app;
 };
