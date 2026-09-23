@@ -4,7 +4,7 @@ import { rateLimit } from "../middleware.js";
 import { logAndExit, type TtlCache } from "../utils.js";
 import { reviewCode } from "../ai.js";
 import { logger } from "../logger.js";
-import type { OpencodeClient } from "@opencode-ai/sdk";
+import type { AIProvider } from "../providers/types.js";
 import type { Request, Response } from "express";
 import { Router } from "express";
 
@@ -17,7 +17,7 @@ if (
   logAndExit(`Invalid REVIEW_TIMEOUT_MS: ${process.env.REVIEW_TIMEOUT_MS}`);
 }
 export const reviewRouter = (
-  client: OpencodeClient,
+  provider: AIProvider,
   cache: TtlCache<Review>,
 ) => {
   const router = Router();
@@ -39,7 +39,7 @@ export const reviewRouter = (
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), REVIEW_TIMEOUT_MS);
       try {
-        const { review, cached } = await reviewCode(client, {
+        const { review, cached } = await reviewCode(provider, {
           request: parsed.data,
           cache,
           signal: controller.signal,

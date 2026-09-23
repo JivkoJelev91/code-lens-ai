@@ -1,13 +1,14 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import type { OpencodeClient } from '@opencode-ai/sdk';
 import { createOpencodeClient, createOpencodeServer } from '@opencode-ai/sdk';
 import type { Review } from '@code-lens-ai/shared';
 import { globalRateLimit } from './middleware.js';
 import { logger, requestLogger } from './logger.js';
 import { createTtlCache, errorHandler, isLocalhost, logAndExit, type TtlCache } from './utils.js';
 import { reviewRouter } from './routes/review.js';
+import { OpencodeAIProvider } from './providers/opencode.js';
+import type { AIProvider } from './providers/types.js';
 
 const STARTUP_TIMEOUT_MS = 60_000;
 const REVIEW_CACHE_TTL_MS = 60 * 60 * 1_000;
@@ -46,7 +47,7 @@ const corsMiddleware = cors({
   maxAge: 86_400,
 });
 
-const createApp = (client: OpencodeClient, cache: TtlCache<Review>) => {
+const createApp = (provider: AIProvider, cache: TtlCache<Review>) => {
   const app = express();
 
   app.set('trust proxy', 1);
@@ -58,7 +59,7 @@ const createApp = (client: OpencodeClient, cache: TtlCache<Review>) => {
   app.get('/', (_req, res) => {
     res.json({ message: 'CodeLens AI server is running.' });
   });
-  app.use('/api', reviewRouter(client, cache));
+  app.use('/api', reviewRouter(provider, cache));
   app.use(errorHandler);
   return app;
 };
@@ -66,8 +67,9 @@ const createApp = (client: OpencodeClient, cache: TtlCache<Review>) => {
 const main = async () => {
   const opencode = await createOpencodeServer({ timeout: STARTUP_TIMEOUT_MS, port: 0 });
   const client = createOpencodeClient({ baseUrl: opencode.url });
+  const provider = new OpencodeAIProvider(client);
   const cache: TtlCache<Review> = createTtlCache<Review>(REVIEW_CACHE_TTL_MS, REVIEW_CACHE_MAX_ENTRIES);
-  const app = createApp(client, cache);
+  const app = createApp(provider, cache);
 
   app.listen(PORT, HOST, () => {
     logger.info({ host: HOST, port: PORT }, 'Server listening');
