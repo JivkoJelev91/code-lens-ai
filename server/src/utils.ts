@@ -89,6 +89,7 @@ export const createTtlCache = <T>(
 export interface ResultCache<T> {
   get(key: string): Promise<T | undefined>;
   set(key: string, value: T, expiresAt?: number): Promise<void>;
+  ping(): Promise<void>;
   dispose(): Promise<void>;
 }
 
@@ -99,6 +100,7 @@ export const createAsyncTtlCache = <T>(ttlMs: number, maxEntries: number): Resul
     set: async (key, value, expiresAt) => {
       cache.set(key, value, expiresAt);
     },
+    ping: async () => {},
     dispose: async () => cache.dispose(),
   };
 };

@@ -31,7 +31,7 @@ export const CASES: EvalCase[] = [
     description: 'API keys embedded in source must be flagged',
     code: `export const config = {
   apiKey: 'sk-live-4f9a2c8b1d7e6f5a3c2b',
-  stripeSecret: 'sk_test_51HqWx2eZvKYlo2C0P1oR8n4T6u9',
+  stripeSecret: 'sk-test-0123456789abcdef0123456789abcdef',
 };
 `,
     expect: { mustFind: ['hardcod'] },

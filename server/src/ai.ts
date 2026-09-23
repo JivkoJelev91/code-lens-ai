@@ -1,6 +1,7 @@
 import { reviewSchema, reviewJsonShape, type Review, type ReviewRequest } from '@code-lens-ai/shared';
 import { hashKey, type ResultCache } from './utils.js';
 import { getRequestLogger } from './logger.js';
+import { redactSecrets } from './secrets.js';
 import type { AIProvider } from './providers/types.js';
 import { AIBudgetExceededError, AIOutputError } from './errors.js';
 import { retriable } from './retry.js';
@@ -56,8 +57,11 @@ export const reviewCode = async (
   provider: AIProvider,
   { request, cache, budget, semaphore, signal }: ReviewCodeOptions,
 ): Promise<ReviewResult> => {
-  const cacheKey = hashKey(`${request.code}::${reviewJsonShape}`);
+  const { text: code, matched } = redactSecrets(request.code);
   const log = getRequestLogger();
+  if (matched) log.warn({}, 'Secrets redacted from review input');
+
+  const cacheKey = hashKey(`${code}::${reviewJsonShape}`);
   const cached = await cache.get(cacheKey);
   if (cached) {
     log.info({ cache: 'hit' }, 'Review served from cache');
@@ -70,7 +74,7 @@ export const reviewCode = async (
   let feedback: string | undefined;
   let review: Review | undefined;
   for (let attempt = 0; attempt <= MAX_REPAIR_ATTEMPTS; attempt++) {
-    const attemptPrompt = buildReviewPrompt(skillContent, request.code, feedback);
+    const attemptPrompt = buildReviewPrompt(skillContent, code, feedback);
     const text = await retriable(
       async () => {
         await semaphore.acquire();

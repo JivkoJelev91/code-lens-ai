@@ -21,9 +21,11 @@ const framed = (review: Review) => `\`\`\`json\n${JSON.stringify(review)}\n\`\`\
 
 class FakeProvider implements AIProvider {
   calls = 0;
+  prompts: string[] = [];
   constructor(private readonly responses: Array<AIProviderResult | Error>) {}
 
-  async prompt(): Promise<AIProviderResult> {
+  async prompt(text: string): Promise<AIProviderResult> {
+    this.prompts.push(text);
     const response = this.responses[Math.min(this.calls, this.responses.length - 1)];
     this.calls += 1;
     if (response instanceof Error) throw response;
@@ -107,6 +109,22 @@ describe('reviewCode', () => {
 
     expect(result.review).toEqual(expected);
     expect(provider.calls).toBe(2);
+  });
+
+  it('redacts secrets from the code before sending it to the provider', async () => {
+    const secret = 'sk-proj-abc123ABCxyz456DEF789';
+    const provider = new FakeProvider([{ text: framed(sampleReview()) }]);
+
+    await reviewCode(provider, {
+      request: { code: `const key = "${secret}";` },
+      cache,
+      budget,
+      semaphore,
+    });
+
+    expect(provider.calls).toBe(1);
+    expect(provider.prompts[0]).not.toContain(secret);
+    expect(provider.prompts[0]).toContain('[REDACTED_SECRET]');
   });
 
   it('rejects when every provider attempt fails', async () => {

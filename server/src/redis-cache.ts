@@ -32,6 +32,9 @@ export const createRedisCache = <T>(url: string, ttlMs: number): ResultCache<T> 
         getRequestLogger().warn({ err }, 'Redis cache set failed');
       }
     },
+    async ping() {
+      await client.ping();
+    },
     async dispose() {
       await client.quit();
     },

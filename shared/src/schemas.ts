@@ -17,7 +17,7 @@ export const reviewRequestSchema = z.object({
 export const issueSchema = z.object({
   severity: z.enum(['high', 'medium', 'low']),
   category: z.string().max(MAX_STRING_LENGTH),
-  line: z.number().min(0).nullable(),
+  line: z.number().min(0).max(1_000_000).nullable(),
   message: z.string().max(MAX_STRING_LENGTH),
   suggestion: z.string().max(MAX_STRING_LENGTH),
 });

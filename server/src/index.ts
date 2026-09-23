@@ -4,7 +4,7 @@ import cors from 'cors';
 import { createOpencodeClient, createOpencodeServer } from '@opencode-ai/sdk';
 import type { Review } from '@code-lens-ai/shared';
 import { globalRateLimit } from './middleware.js';
-import { logger, requestLogger } from './logger.js';
+import { logger, requestLogger, getRequestLogger } from './logger.js';
 import { createAsyncTtlCache, errorHandler, isLocalhost, logAndExit, type ResultCache } from './utils.js';
 import { createRedisCache } from './redis-cache.js';
 import { reviewRouter } from './routes/review.js';
@@ -77,6 +77,18 @@ const createApp = (
   app.use(helmet());
   app.use(express.json({ limit: '128kb' }));
   app.use(corsMiddleware);
+  app.get('/health/live', (_req, res) => {
+    res.json({ status: 'live' });
+  });
+  app.get('/health/ready', async (_req, res) => {
+    try {
+      await cache.ping();
+      res.json({ status: 'ready' });
+    } catch (error) {
+      getRequestLogger().warn({ err: error }, 'Readiness check failed');
+      res.status(503).json({ status: 'not_ready' });
+    }
+  });
   app.use(requestLogger);
   app.use(globalRateLimit);
   app.get('/', (_req, res) => {
@@ -98,7 +110,7 @@ const main = async () => {
   const semaphore: Semaphore = createSemaphore(AI_MAX_CONCURRENCY);
   const app = createApp(provider, cache, budget, semaphore);
 
-  app.listen(PORT, HOST, () => {
+  const server = app.listen(PORT, HOST, () => {
     logger.info(
       {
         nodeEnv: process.env.NODE_ENV ?? 'development',
@@ -115,12 +127,21 @@ const main = async () => {
 
   const shutdown = async () => {
     logger.info('Shutting down server');
+    const forceExit = setTimeout(() => {
+      logger.warn('Shutdown timed out, forcing exit');
+      process.exit(1);
+    }, 5_000);
+    forceExit.unref();
+
+    server.close();
+    server.closeAllConnections();
     try {
       await cache.dispose();
     } catch (err) {
       logger.warn({ err }, 'Cache dispose failed');
     }
     opencode.close();
+    clearTimeout(forceExit);
     process.exit(0);
   };
   for (const signal of ['SIGINT', 'SIGTERM'] as const) {
