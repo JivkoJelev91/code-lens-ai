@@ -10,6 +10,8 @@
     "build": "pnpm --filter @code-lens-ai/shared run build && pnpm --filter @code-lens-ai/client run build && pnpm --filter @code-lens-ai/server run build",
     "start": "pnpm --filter @code-lens-ai/server run start",
     "lint": "oxlint client server shared",
+    "eval": "pnpm --filter @code-lens-ai/server run eval",
+    "test": "pnpm --filter @code-lens-ai/server run test",
     "typecheck": "pnpm -r run typecheck"
   },
   "devDependencies": {

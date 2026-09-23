@@ -30,3 +30,7 @@ planing.md
 *.njsproj
 *.sln
 *.sw?
+
+# Vitest
+.vitest/
+coverage

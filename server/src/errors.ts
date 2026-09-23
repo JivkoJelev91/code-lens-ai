@@ -1,14 +1,21 @@
 export class AppError extends Error {
+  readonly code: string;
+  readonly status: number;
+  readonly retriable: boolean;
+
   constructor(
-    readonly code: string,
-    readonly status: number,
-    readonly retriable: boolean,
+    code: string,
+    status: number,
+    retriable: boolean,
     message: string,
     cause?: unknown,
   ) {
     if (cause !== undefined) super(message, { cause });
     else super(message);
-    this.name = new.target.name;
+    this.code = code;
+    this.status = status;
+    this.retriable = retriable;
+    this.name = this.constructor.name;
   }
 }
 
