@@ -6,6 +6,23 @@ const isDev = process.env.NODE_ENV !== 'production';
 
 export const logger = pino({
   level: process.env.LOG_LEVEL ?? (isDev ? 'debug' : 'info'),
+  redact: {
+    paths: [
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'req.headers["x-api-key"]',
+      'err.config.headers.authorization',
+      'password',
+      '*.password',
+      'token',
+      '*.token',
+      'secret',
+      '*.secret',
+      'apiKey',
+      '*.apiKey',
+    ],
+    censor: '[redacted]',
+  },
   ...(isDev && {
     transport: {
       target: 'pino/file',
@@ -30,6 +47,9 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
         status: res.statusCode,
         durationMs,
         ip: req.ip,
+        ua: req.get('user-agent'),
+        bytes: Number(res.getHeader('content-length')) || undefined,
+        cache: res.getHeader('X-Cache') as string | undefined,
       },
       'request completed',
     );

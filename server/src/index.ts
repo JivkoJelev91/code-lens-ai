@@ -99,7 +99,18 @@ const main = async () => {
   const app = createApp(provider, cache, budget, semaphore);
 
   app.listen(PORT, HOST, () => {
-    logger.info({ host: HOST, port: PORT }, 'Server listening');
+    logger.info(
+      {
+        nodeEnv: process.env.NODE_ENV ?? 'development',
+        host: HOST,
+        port: PORT,
+        aiMaxConcurrency: AI_MAX_CONCURRENCY,
+        aiBudgetMaxTokens: AI_BUDGET_MAX_TOKENS,
+        aiBudgetWindowMs: AI_BUDGET_WINDOW_MS,
+        cacheMode: REDIS_URL ? 'redis' : 'memory',
+      },
+      'Server listening',
+    );
   });
 
   const shutdown = async () => {
