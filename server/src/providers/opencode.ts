@@ -42,12 +42,14 @@ export class OpencodeAIProvider implements AIProvider {
         .map((part) => (part as Extract<typeof part, { type: "text" }>).text)
         .join("\n");
 
-      const tokens = response.data.info?.tokens;
-      const usage: AIUsage = {
-        inputTokens: tokens?.input ?? 0,
-        outputTokens: tokens?.output ?? 0,
-        cost: response.data.info?.cost ?? 0,
-      };
+      const info = response.data.info;
+      const usage: AIUsage | undefined = info?.tokens
+        ? {
+            inputTokens: info.tokens.input,
+            outputTokens: info.tokens.output,
+            cost: info.cost ?? 0,
+          }
+        : undefined;
       return { text: reply, usage };
     } finally {
       if (signal?.aborted) {

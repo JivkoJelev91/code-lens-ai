@@ -1,5 +1,7 @@
+import { AIAbortError } from './errors.js';
+
 export interface Semaphore {
-  acquire(): Promise<void>;
+  acquire(signal?: AbortSignal): Promise<void>;
   release(): void;
 }
 
@@ -8,13 +10,24 @@ export const createSemaphore = (max: number): Semaphore => {
   const waiting: Array<() => void> = [];
 
   return {
-    acquire() {
+    acquire(signal) {
+      if (signal?.aborted) return Promise.reject(new AIAbortError());
       if (active < max) {
         active += 1;
         return Promise.resolve();
       }
-      return new Promise<void>((resolve) => {
-        waiting.push(resolve);
+      return new Promise<void>((resolve, reject) => {
+        const onAbort = () => {
+          const index = waiting.indexOf(wake);
+          if (index !== -1) waiting.splice(index, 1);
+          reject(new AIAbortError());
+        };
+        const wake = () => {
+          signal?.removeEventListener('abort', onAbort);
+          resolve();
+        };
+        waiting.push(wake);
+        signal?.addEventListener('abort', onAbort, { once: true });
       });
     },
     release() {

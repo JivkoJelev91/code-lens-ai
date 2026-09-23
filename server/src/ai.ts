@@ -77,7 +77,7 @@ export const reviewCode = async (
     const attemptPrompt = buildReviewPrompt(skillContent, code, feedback);
     const text = await retriable(
       async () => {
-        await semaphore.acquire();
+        await semaphore.acquire(signal);
         try {
           const estimate = estimateInputTokens(attemptPrompt);
           if (!budget.reserve(estimate)) throw new AIBudgetExceededError();
@@ -87,6 +87,9 @@ export const reviewCode = async (
             if (usage) {
               budget.record(usage.inputTokens, usage.outputTokens);
               log.info({ usage, remaining: budget.remaining() }, 'AI token usage recorded');
+            } else {
+              budget.record(estimate, 0);
+              log.warn({}, 'AI usage not reported, recording estimate');
             }
             return raw;
           } catch (error) {

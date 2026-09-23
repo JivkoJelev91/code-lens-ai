@@ -75,8 +75,6 @@ const createApp = (
 
   app.set('trust proxy', 1);
   app.use(helmet());
-  app.use(express.json({ limit: '128kb' }));
-  app.use(corsMiddleware);
   app.get('/health/live', (_req, res) => {
     res.json({ status: 'live' });
   });
@@ -90,6 +88,8 @@ const createApp = (
     }
   });
   app.use(requestLogger);
+  app.use(express.json({ limit: '128kb' }));
+  app.use(corsMiddleware);
   app.use(globalRateLimit);
   app.get('/', (_req, res) => {
     res.json({ message: 'CodeLens AI server is running.' });

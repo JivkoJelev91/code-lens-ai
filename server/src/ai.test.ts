@@ -135,4 +135,14 @@ describe('reviewCode', () => {
     ).rejects.toThrow('boom harder');
     expect(provider.calls).toBe(3);
   });
+
+  it('records a fallback estimate when the provider reports no usage', async () => {
+    const provider = new FakeProvider([{ text: framed(sampleReview()) }]);
+    const tracked = createCostTracker(60_000, 10_000_000);
+    const before = tracked.remaining();
+
+    await reviewCode(provider, { request: { code: CODE }, cache, budget: tracked, semaphore });
+
+    expect(tracked.remaining()).toBeLessThan(before);
+  });
 });

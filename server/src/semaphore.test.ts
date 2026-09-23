@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createSemaphore } from './semaphore.js';
+import { AIAbortError } from './errors.js';
 
 describe('semaphore', () => {
   it('never lets more than max tasks run at once', async () => {
@@ -47,5 +48,27 @@ describe('semaphore', () => {
     semaphore.release();
     await semaphore.acquire();
     semaphore.release();
+  });
+
+  it('rejects an acquire with an already-aborted signal', async () => {
+    const semaphore = createSemaphore(1);
+    const controller = new AbortController();
+    controller.abort();
+    await expect(semaphore.acquire(controller.signal)).rejects.toThrow(AIAbortError);
+  });
+
+  it('removes an aborted waiter without corrupting the queue', async () => {
+    const semaphore = createSemaphore(1);
+    await semaphore.acquire();
+    const controller = new AbortController();
+    const aborted = semaphore.acquire(controller.signal).catch((error) => error);
+    const second = semaphore.acquire().then(() => semaphore.release());
+
+    controller.abort();
+    semaphore.release();
+    await second;
+
+    const error = await aborted;
+    expect(error).toBeInstanceOf(AIAbortError);
   });
 });
