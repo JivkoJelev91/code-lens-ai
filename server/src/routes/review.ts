@@ -7,6 +7,7 @@ import { logger } from "../logger.js";
 import { AppError } from "../errors.js";
 import type { AIProvider } from "../providers/types.js";
 import type { CostTracker } from "../cost.js";
+import type { Semaphore } from "../semaphore.js";
 import type { Request, Response } from "express";
 import { Router } from "express";
 
@@ -22,6 +23,7 @@ export const reviewRouter = (
   provider: AIProvider,
   cache: TtlCache<Review>,
   budget: CostTracker,
+  semaphore: Semaphore,
 ) => {
   const router = Router();
 
@@ -46,6 +48,7 @@ export const reviewRouter = (
           request: parsed.data,
           cache,
           budget,
+          semaphore,
           signal: controller.signal,
         });
         res.setHeader("X-Cache", cached ? "HIT" : "MISS");

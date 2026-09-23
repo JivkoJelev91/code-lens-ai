@@ -5,6 +5,7 @@ import type { AIProvider } from './providers/types.js';
 import { AIBudgetExceededError, AIOutputError } from './errors.js';
 import { retriable } from './retry.js';
 import type { CostTracker } from './cost.js';
+import type { Semaphore } from './semaphore.js';
 import { buildReviewPrompt, getSkill } from './prompts.js';
 
 export interface ReviewResult {
@@ -16,13 +17,18 @@ const MAX_REPAIR_ATTEMPTS = 1;
 const PROVIDER_MAX_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 250;
 const RETRY_MAX_DELAY_MS = 2_000;
+const OUTPUT_TOKEN_RESERVE = 1_500;
 
 export interface ReviewCodeOptions {
   request: ReviewRequest;
   cache: TtlCache<Review>;
   budget: CostTracker;
+  semaphore: Semaphore;
   signal?: AbortSignal;
 }
+
+const estimateInputTokens = (prompt: string) =>
+  Math.ceil(prompt.length / 4) + OUTPUT_TOKEN_RESERVE;
 
 const parseReviewText = (text: string): { review: Review } | { feedback: string } => {
   let parsed: unknown;
@@ -47,7 +53,7 @@ const parseReviewText = (text: string): { review: Review } | { feedback: string 
 
 export const reviewCode = async (
   provider: AIProvider,
-  { request, cache, budget, signal }: ReviewCodeOptions,
+  { request, cache, budget, semaphore, signal }: ReviewCodeOptions,
 ): Promise<ReviewResult> => {
   const cacheKey = hashKey(`${request.code}::${reviewJsonShape}`);
   const cached = cache.get(cacheKey);
@@ -65,13 +71,25 @@ export const reviewCode = async (
     const attemptPrompt = buildReviewPrompt(skillContent, request.code, feedback);
     const text = await retriable(
       async () => {
-        if (budget.remaining() <= 0) throw new AIBudgetExceededError();
-        const { text: raw, usage } = await provider.prompt(attemptPrompt, { signal });
-        if (usage) {
-          budget.record(usage);
-          logger.info({ usage }, 'AI token usage recorded');
+        await semaphore.acquire();
+        try {
+          const estimate = estimateInputTokens(attemptPrompt);
+          if (!budget.reserve(estimate)) throw new AIBudgetExceededError();
+          try {
+            const { text: raw, usage } = await provider.prompt(attemptPrompt, { signal });
+            budget.refund(estimate);
+            if (usage) {
+              budget.record(usage.inputTokens, usage.outputTokens);
+              logger.info({ usage, remaining: budget.remaining() }, 'AI token usage recorded');
+            }
+            return raw;
+          } catch (error) {
+            budget.refund(estimate);
+            throw error;
+          }
+        } finally {
+          semaphore.release();
         }
-        return raw;
       },
       {
         attempts: PROVIDER_MAX_ATTEMPTS,

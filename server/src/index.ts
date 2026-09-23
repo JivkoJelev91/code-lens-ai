@@ -11,10 +11,17 @@ import { OpencodeAIProvider } from './providers/opencode.js';
 import type { AIProvider } from './providers/types.js';
 import { createCostTracker } from './cost.js';
 import type { CostTracker } from './cost.js';
+import { createSemaphore } from './semaphore.js';
+import type { Semaphore } from './semaphore.js';
 
 const STARTUP_TIMEOUT_MS = 60_000;
 const REVIEW_CACHE_TTL_MS = 60 * 60 * 1_000;
 const REVIEW_CACHE_MAX_ENTRIES = 1_000;
+
+const AI_MAX_CONCURRENCY = Number(process.env.AI_MAX_CONCURRENCY ?? 4);
+if (!Number.isInteger(AI_MAX_CONCURRENCY) || AI_MAX_CONCURRENCY < 1) {
+  logAndExit(`Invalid AI_MAX_CONCURRENCY: ${process.env.AI_MAX_CONCURRENCY}`);
+}
 
 const AI_BUDGET_WINDOW_MS = 60 * 60 * 1_000;
 const AI_BUDGET_MAX_TOKENS = Number(process.env.AI_BUDGET_TOKENS_PER_HOUR ?? 200_000);
@@ -59,6 +66,7 @@ const createApp = (
   provider: AIProvider,
   cache: TtlCache<Review>,
   budget: CostTracker,
+  semaphore: Semaphore,
 ) => {
   const app = express();
 
@@ -71,7 +79,7 @@ const createApp = (
   app.get('/', (_req, res) => {
     res.json({ message: 'CodeLens AI server is running.' });
   });
-  app.use('/api', reviewRouter(provider, cache, budget));
+  app.use('/api', reviewRouter(provider, cache, budget, semaphore));
   app.use(errorHandler);
   return app;
 };
@@ -82,7 +90,8 @@ const main = async () => {
   const provider = new OpencodeAIProvider(client);
   const cache: TtlCache<Review> = createTtlCache<Review>(REVIEW_CACHE_TTL_MS, REVIEW_CACHE_MAX_ENTRIES);
   const budget: CostTracker = createCostTracker(AI_BUDGET_WINDOW_MS, AI_BUDGET_MAX_TOKENS);
-  const app = createApp(provider, cache, budget);
+  const semaphore: Semaphore = createSemaphore(AI_MAX_CONCURRENCY);
+  const app = createApp(provider, cache, budget, semaphore);
 
   app.listen(PORT, HOST, () => {
     logger.info({ host: HOST, port: PORT }, 'Server listening');
