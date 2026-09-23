@@ -4,7 +4,9 @@ import { rateLimit } from "../middleware.js";
 import { logAndExit, type TtlCache } from "../utils.js";
 import { reviewCode } from "../ai.js";
 import { logger } from "../logger.js";
+import { AppError } from "../errors.js";
 import type { AIProvider } from "../providers/types.js";
+import type { CostTracker } from "../cost.js";
 import type { Request, Response } from "express";
 import { Router } from "express";
 
@@ -19,6 +21,7 @@ if (
 export const reviewRouter = (
   provider: AIProvider,
   cache: TtlCache<Review>,
+  budget: CostTracker,
 ) => {
   const router = Router();
 
@@ -42,18 +45,19 @@ export const reviewRouter = (
         const { review, cached } = await reviewCode(provider, {
           request: parsed.data,
           cache,
+          budget,
           signal: controller.signal,
         });
         res.setHeader("X-Cache", cached ? "HIT" : "MISS");
         res.json(review);
       } catch (error) {
-        const isTimeout = controller.signal.aborted;
+        if (error instanceof AppError) {
+          logger.warn({ code: error.code, retriable: error.retriable }, "Review request rejected");
+          res.status(error.status).json({ error: error.message });
+          return;
+        }
         logger.error({ err: error }, "Review request failed");
-        res.status(isTimeout ? 504 : 500).json({
-          error: isTimeout
-            ? "Review timed out. Please try again."
-            : "Review failed, try again!",
-        });
+        res.status(500).json({ error: "Review failed, try again!" });
       } finally {
         clearTimeout(timer);
       }

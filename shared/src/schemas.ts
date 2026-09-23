@@ -34,3 +34,19 @@ export type ReviewRequest = z.infer<typeof reviewRequestSchema>;
 export type Severity = z.infer<typeof issueSchema>['severity'];
 export type Issue = z.infer<typeof issueSchema>;
 export type Review = z.infer<typeof reviewSchema>;
+
+export const reviewJsonShape = `{
+  "language": "string",
+  "framework": "string",
+  "score": 0-10,
+  "summary": "string",
+  "issues": [
+    {
+      "severity": "high" | "medium" | "low",
+      "category": "string",
+      "line": number | null,
+      "message": "string",
+      "suggestion": "string"
+    }
+  ]
+}`;

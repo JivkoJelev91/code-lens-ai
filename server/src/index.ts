@@ -9,10 +9,18 @@ import { createTtlCache, errorHandler, isLocalhost, logAndExit, type TtlCache } 
 import { reviewRouter } from './routes/review.js';
 import { OpencodeAIProvider } from './providers/opencode.js';
 import type { AIProvider } from './providers/types.js';
+import { createCostTracker } from './cost.js';
+import type { CostTracker } from './cost.js';
 
 const STARTUP_TIMEOUT_MS = 60_000;
 const REVIEW_CACHE_TTL_MS = 60 * 60 * 1_000;
 const REVIEW_CACHE_MAX_ENTRIES = 1_000;
+
+const AI_BUDGET_WINDOW_MS = 60 * 60 * 1_000;
+const AI_BUDGET_MAX_TOKENS = Number(process.env.AI_BUDGET_TOKENS_PER_HOUR ?? 200_000);
+if (!Number.isFinite(AI_BUDGET_MAX_TOKENS) || AI_BUDGET_MAX_TOKENS < 1) {
+  logAndExit(`Invalid AI_BUDGET_TOKENS_PER_HOUR: ${process.env.AI_BUDGET_TOKENS_PER_HOUR}`);
+}
 
 const port = Number(process.env.PORT ?? 4001);
 if (!Number.isInteger(port) || port <= 0 || port > 65_535) {
@@ -47,7 +55,11 @@ const corsMiddleware = cors({
   maxAge: 86_400,
 });
 
-const createApp = (provider: AIProvider, cache: TtlCache<Review>) => {
+const createApp = (
+  provider: AIProvider,
+  cache: TtlCache<Review>,
+  budget: CostTracker,
+) => {
   const app = express();
 
   app.set('trust proxy', 1);
@@ -59,7 +71,7 @@ const createApp = (provider: AIProvider, cache: TtlCache<Review>) => {
   app.get('/', (_req, res) => {
     res.json({ message: 'CodeLens AI server is running.' });
   });
-  app.use('/api', reviewRouter(provider, cache));
+  app.use('/api', reviewRouter(provider, cache, budget));
   app.use(errorHandler);
   return app;
 };
@@ -69,7 +81,8 @@ const main = async () => {
   const client = createOpencodeClient({ baseUrl: opencode.url });
   const provider = new OpencodeAIProvider(client);
   const cache: TtlCache<Review> = createTtlCache<Review>(REVIEW_CACHE_TTL_MS, REVIEW_CACHE_MAX_ENTRIES);
-  const app = createApp(provider, cache);
+  const budget: CostTracker = createCostTracker(AI_BUDGET_WINDOW_MS, AI_BUDGET_MAX_TOKENS);
+  const app = createApp(provider, cache, budget);
 
   app.listen(PORT, HOST, () => {
     logger.info({ host: HOST, port: PORT }, 'Server listening');
